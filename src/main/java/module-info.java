@@ -1,7 +1,11 @@
-module force5dev {
+module force5dev
+{
     requires javafx.controls;
     requires javafx.fxml;
+    requires org.jfxtras.styles.jmetro;
 
-    opens force5dev to javafx.fxml;
-    exports force5dev;
+    opens trafficsim.controller to javafx.fxml;
+
+    exports trafficsim;
+    exports trafficsim.controller;
 }

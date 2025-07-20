@@ -1,15 +1,20 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+    xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>force5dev</groupId>
     <artifactId>trafficsim</artifactId>
     <version>1.0-SNAPSHOT</version>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <javafx.version>21</javafx.version>
+        <maven.compiler.release>11</maven.compiler.release>
+        <javafx.version>11.0.2</javafx.version>
+        <main.class>trafficsim.MainApplication</main.class>
     </properties>
 
     <dependencies>
@@ -25,7 +30,7 @@
             <version>${javafx.version}</version>
         </dependency>
 
-        <!-- JMetro Theme -->
+        <!-- JMetro Theme for JavaFX 11 -->
         <dependency>
             <groupId>org.jfxtras</groupId>
             <artifactId>jmetro</artifactId>
@@ -47,18 +52,15 @@
         </dependency>
     </dependencies>
 
-
     <build>
         <plugins>
-
             <!-- Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.8.1</version>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
+                    <release>${maven.compiler.release}</release>
                 </configuration>
             </plugin>
 
@@ -67,17 +69,9 @@
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
-                <executions>
-                    <execution>
-                        <!-- Default configuration for running: mvn clean javafx:run -->
-                        <id>default-cli</id>
-                        <configuration>
-                            <mainClass>
-                                com.traffic.simulation/com.traffic.simulation.MainApplication
-                            </mainClass>
-                        </configuration>
-                    </execution>
-                </executions>
+                <configuration>
+                    <mainClass>${main.class}</mainClass>
+                </configuration>
             </plugin>
 
             <!-- Surefire Plugin for test execution -->
@@ -85,31 +79,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
-            </plugin>
-
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
-                <configuration>
-                    <release>17</release>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>0.0.6</version>
-                <executions>
-                    <execution>
-                        <!-- Default configuration for running -->
-                        <!-- Usage: mvn clean javafx:run -->
-                        <id>default-cli</id>
-                        <configuration>
-                            <mainClass>force5dev.App</mainClass>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

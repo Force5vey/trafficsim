@@ -1,4 +1,4 @@
-package force5dev;
+package trafficsim;
 
 import org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
