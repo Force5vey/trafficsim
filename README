@@ -1,0 +1,11 @@
+# Traffic Simulation
+
+A project for the UMGC Object-Oriented Programming course.
+
+This application simulates traffic flow through multiple intersections using JavaFX for the graphical user interface. The simulation logic is managed with concurrent threads to handle time, traffic lights, and vehicle movement independently.
+
+**Technology Stack:**
+*   Java 17
+*   JavaFX 21 with FXML
+*   Maven
+*   JMetro for UI theme
