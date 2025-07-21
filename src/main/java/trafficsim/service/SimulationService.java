@@ -1,5 +1,8 @@
 package trafficsim.service;
 
+import trafficsim.model.IIntersection;
+import trafficsim.model.Car;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -7,8 +10,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import javafx.application.Platform;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
-import trafficsim.model.Car;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +25,7 @@ public class SimulationService
     private final AtomicLong internalTimeMillis = new AtomicLong(0);
 
     private final List<Car> cars = new ArrayList<>();
+    private final ObservableList<IIntersection> intersections = FXCollections.observableArrayList();
 
     public void start()
     {
@@ -53,6 +58,16 @@ public class SimulationService
         cars.add(car);
     }
 
+    public void addIntersection(IIntersection intersection)
+    {
+        intersections.add(intersection);
+    }
+
+    public ObservableList<IIntersection> getIntersections()
+    {
+        return intersections;
+    }
+
     private void simulationStep()
     {
         long currentTime = internalTimeMillis.addAndGet(tickRateMillis);
@@ -67,6 +82,11 @@ public class SimulationService
         {
             // update logic isn't thread safe, all needs to be updated to be.
             car.update(deltaTime);
+        }
+
+        for (IIntersection intersection : new ArrayList<>(intersections))
+        {
+            intersection.update(deltaTime);
         }
 
         // Update all model objects (cars, intersections)
