@@ -3,6 +3,7 @@ package trafficsim.service;
 import trafficsim.model.IIntersection;
 import trafficsim.model.Car;
 
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -23,8 +24,11 @@ public class SimulationService
     private final LongProperty simulationTime = new SimpleLongProperty(0);
     private final AtomicLong internalTimeMillis = new AtomicLong(0);
 
+    // TODO: Car will need updating to intersection list type
     private final ObservableList<Car> cars = FXCollections.observableArrayList();
-    private final ObservableList<IIntersection> intersections = FXCollections.observableArrayList();
+
+    private final CopyOnWriteArrayList<IIntersection> intersectionsList = new CopyOnWriteArrayList<>();
+    private final ObservableList<IIntersection> intersections = FXCollections.observableArrayList(intersectionsList);
 
     public void start()
     {
@@ -93,7 +97,7 @@ public class SimulationService
             car.update(deltaTime);
         }
 
-        for (IIntersection intersection : new ArrayList<>(intersections))
+        for (IIntersection intersection : intersections)
         {
             intersection.update(deltaTime);
         }
