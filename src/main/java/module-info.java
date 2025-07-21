@@ -1,4 +1,4 @@
-module force5dev
+module trafficsim
 {
     requires javafx.controls;
     requires javafx.fxml;
