@@ -67,6 +67,11 @@ public class SimulationService
         intersections.add(intersection);
     }
 
+    public void removeIntersection(IIntersection intersection)
+    {
+        intersections.remove(intersection);
+    }
+
     public ObservableList<IIntersection> getIntersections()
     {
         return intersections;

@@ -23,6 +23,7 @@ import trafficsim.service.SimulationService;
 import trafficsim.model.IIntersection;
 import trafficsim.model.Roundabout;
 import trafficsim.model.TrafficLightIntersection;
+import trafficsim.model.TrafficLightState;
 import trafficsim.view.SimulationRenderer;
 
 public class MainController
@@ -46,13 +47,18 @@ public class MainController
 
     private SimulationService simulationService;
     private SimulationRenderer simulationRenderer;
-    private boolean isPlacingIntersection = false;
+
+    public enum InteractionMode {
+        NORMAL, PLACING_INTERSECTION, PLACING_ROAD
+    }
+
+    private InteractionMode currentMode = InteractionMode.NORMAL;
 
     @FXML
     public void initialize()
     {
         this.simulationService = new SimulationService();
-        this.simulationRenderer = new SimulationRenderer(simulationPane, simulationService);
+        this.simulationRenderer = new SimulationRenderer(simulationPane, simulationService, this);
 
         timeLabel.textProperty().bind(simulationService.simulationTimeProperty().asString("Time: %d s"));
 
@@ -61,9 +67,14 @@ public class MainController
         simulationPane.setOnMouseClicked(this::handlePaneClick);
     }
 
+    public InteractionMode getCurrentMode()
+    {
+        return currentMode;
+    }
+
     private void handlePaneClick(MouseEvent event)
     {
-        if (isPlacingIntersection)
+        if (currentMode == InteractionMode.PLACING_INTERSECTION)
         {
             double x = event.getX();
             double y = event.getY();
@@ -75,6 +86,7 @@ public class MainController
                 if (distance < MIN_PLACEMENT_DISTANCE)
                 {
                     // TODO: have a visual clue that it is too close to an existing intersection
+                    // probably just highlight the existing and just "ignore" the click
                     System.err.println("Cannot place intersection: Too close to another.");
                     return;
                 }
@@ -84,7 +96,7 @@ public class MainController
 
             newIntersection.ifPresent(simulationService::addIntersection);
 
-            isPlacingIntersection = false;
+            currentMode = InteractionMode.NORMAL;
             simulationPane.getScene().setCursor(javafx.scene.Cursor.DEFAULT);
         }
     }
@@ -92,7 +104,7 @@ public class MainController
     @FXML
     private void handleAddIntersectionRequest()
     {
-        isPlacingIntersection = true;
+        currentMode = InteractionMode.PLACING_INTERSECTION;
         simulationPane.getScene().setCursor(javafx.scene.Cursor.CROSSHAIR);
     }
 
@@ -101,6 +113,67 @@ public class MainController
     {
         // TODO: add road stuff
         System.out.println("Enterying road drawing mode...");
+    }
+
+    public void showEditIntersectionDialog(IIntersection intersection)
+    {
+        Dialog<Boolean> dialog = new Dialog<>();
+        dialog.setTitle("Edit Intersection");
+        dialog.setHeaderText("Update properties for " + intersection.getClass().getSimpleName());
+
+        ButtonType updateButtonType = new ButtonType("Update", ButtonBar.ButtonData.OK_DONE);
+        ButtonType deleteButtonType = new ButtonType("Delete", ButtonBar.ButtonData.OTHER);
+        dialog.getDialogPane().getButtonTypes().addAll(updateButtonType, deleteButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        // dialog is based on intersection type
+        if (intersection instanceof TrafficLightIntersection)
+        {
+            TrafficLightIntersection model = (TrafficLightIntersection) intersection;
+            TextField green = new TextField(String.valueOf(model.getGreenDuration()));
+            TextField yellow = new TextField(String.valueOf(model.getYellowDuration()));
+            grid.add(new Label("Green (s):"), 0, 0);
+            grid.add(green, 1, 0);
+            grid.add(new Label("Yellow (s):"), 0, 1);
+            grid.add(yellow, 1, 1);
+
+            dialog.setResultConverter(btn ->
+            {
+                if (btn == updateButtonType)
+                {
+                    model.setGreenDuration(Double.parseDouble(green.getText()));
+                    model.setYellowDuration(Double.parseDouble(yellow.getText()));
+                }
+                return btn == deleteButtonType;
+            });
+        } else if (intersection instanceof Roundabout)
+        {
+            Roundabout model = (Roundabout) intersection;
+            TextField speed = new TextField(String.valueOf(model.getSpeedLimit()));
+            grid.add(new Label("Speed (px/s):"), 0, 0);
+            grid.add(speed, 1, 0);
+
+            dialog.setResultConverter(btn ->
+            {
+                if (btn == updateButtonType)
+                {
+                    model.setSpeedLimit(Double.parseDouble(speed.getText()));
+                }
+                return btn == deleteButtonType;
+            });
+        }
+
+        dialog.getDialogPane().setContent(grid);
+        Optional<Boolean> deleteRequested = dialog.showAndWait();
+
+        if (deleteRequested.isPresent() && deleteRequested.get())
+        {
+            simulationService.removeIntersection(intersection);
+        }
     }
 
     private Optional<IIntersection> promptForIntersectionSettings(double x, double y)

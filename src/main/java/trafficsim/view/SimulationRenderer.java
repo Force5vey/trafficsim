@@ -1,26 +1,35 @@
 package trafficsim.view;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 import javafx.collections.ListChangeListener;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import trafficsim.controller.MainController;
 import trafficsim.model.Car;
 import trafficsim.model.IIntersection;
 import trafficsim.model.Roundabout;
 import trafficsim.model.TrafficLightIntersection;
 import trafficsim.service.SimulationService;
+import trafficsim.view.intersection.IntersectionView;
+import trafficsim.view.intersection.RoundaboutView;
+import trafficsim.view.intersection.TrafficLightIntersectionView;
 
 public class SimulationRenderer
 {
     private final Pane simulationPane;
     private final SimulationService simulationService;
+    private final MainController controller;
+    private final Map<IIntersection, Node> intersectionViewMap = new HashMap<>();
 
-    public SimulationRenderer(Pane simulationPane, SimulationService simulationService)
+    public SimulationRenderer(Pane simulationPane, SimulationService simulationService, MainController controller)
     {
         this.simulationPane = simulationPane;
         this.simulationService = simulationService;
+        this.controller = controller;
 
         drawRoad();
 
@@ -59,7 +68,14 @@ public class SimulationRenderer
         {
             if (c.wasRemoved())
             {
-                // TODO: removal logic here
+                for (IIntersection removed : c.getRemoved())
+                {
+                    Node view = intersectionViewMap.remove(removed);
+                    if (view != null)
+                    {
+                        simulationPane.getChildren().remove(view);
+                    }
+                }
             }
 
             if (c.wasAdded())
@@ -85,32 +101,22 @@ public class SimulationRenderer
 
     private void createViewForIntersection(IIntersection intersection)
     {
-        Node view = null;
+        IntersectionView view = null;
+
+        Consumer<IIntersection> editCallback = controller::showEditIntersectionDialog;
+
         if (intersection instanceof TrafficLightIntersection)
         {
-            Rectangle lightView = new Rectangle(10, 40);
-            lightView.setFill(Color.DARKSLATEGRAY);
-            //TODO: bind fill to the lightState proeprties
-            view = lightView;
+            view = new TrafficLightIntersectionView(intersection, editCallback, controller);
         } else if (intersection instanceof Roundabout)
         {
-            Circle roundaboutView = new Circle(50, Color.GOLDENROD);
-            roundaboutView.setStroke(Color.WHITE);
-            view = roundaboutView;
+            view = new RoundaboutView(intersection, editCallback, controller);
         }
 
         if (view != null)
         {
-            view.layoutXProperty().bind(intersection.positionXProperty());
-            view.layoutYProperty().bind(intersection.positionYProperty());
+            intersectionViewMap.put(intersection, view);
             simulationPane.getChildren().add(view);
-
-            view.setOnMouseClicked(event ->
-            {
-                // TODO: live editing dialog here
-                System.out.println("Editing " + intersection.getClass().getSimpleName());
-                event.consume();
-            });
         }
     }
 }
