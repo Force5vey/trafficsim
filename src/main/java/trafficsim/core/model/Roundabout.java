@@ -1,9 +1,9 @@
-package trafficsim.model;
+package trafficsim.core.model;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 
-public class Roundabout implements IIntersection
+public class Roundabout implements Intersection
 {
     private final DoubleProperty positionX = new SimpleDoubleProperty();
     private final DoubleProperty positionY = new SimpleDoubleProperty();

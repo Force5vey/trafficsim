@@ -1,4 +1,4 @@
-package trafficsim.controller;
+package trafficsim.ui.controller;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -17,14 +17,13 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.shape.Circle;
-
-import trafficsim.model.Car;
-import trafficsim.service.SimulationService;
-import trafficsim.model.IIntersection;
-import trafficsim.model.Roundabout;
-import trafficsim.model.TrafficLightIntersection;
-import trafficsim.model.TrafficLightState;
-import trafficsim.view.SimulationRenderer;
+import trafficsim.core.model.Car;
+import trafficsim.core.model.Intersection;
+import trafficsim.core.model.Roundabout;
+import trafficsim.core.model.SignalisedIntersection;
+import trafficsim.core.model.TrafficLightState;
+import trafficsim.core.sim.SimulationEngine;
+import trafficsim.ui.view.SimulationRenderer;
 
 public class MainController
 {
@@ -45,7 +44,7 @@ public class MainController
     @FXML
     private Button addRoadButton;
 
-    private SimulationService simulationService;
+    private SimulationEngine simulationService;
     private SimulationRenderer simulationRenderer;
 
     public enum InteractionMode {
@@ -57,7 +56,7 @@ public class MainController
     @FXML
     public void initialize()
     {
-        this.simulationService = new SimulationService();
+        this.simulationService = new SimulationEngine();
         this.simulationRenderer = new SimulationRenderer(simulationPane, simulationService, this);
 
         timeLabel.textProperty().bind(simulationService.simulationTimeProperty().asString("Time: %d s"));
@@ -79,7 +78,7 @@ public class MainController
             double x = event.getX();
             double y = event.getY();
 
-            for (IIntersection existing : simulationService.getIntersections())
+            for (Intersection existing : simulationService.getIntersections())
             {
                 double distance = Math
                         .sqrt(Math.pow(existing.getPositionX() - x, 2) + Math.pow(existing.getPositionY() - y, 2));
@@ -92,7 +91,7 @@ public class MainController
                 }
             }
 
-            Optional<IIntersection> newIntersection = promptForIntersectionSettings(x, y);
+            Optional<Intersection> newIntersection = promptForIntersectionSettings(x, y);
 
             newIntersection.ifPresent(simulationService::addIntersection);
 
@@ -115,7 +114,7 @@ public class MainController
         System.out.println("Enterying road drawing mode...");
     }
 
-    public void showEditIntersectionDialog(IIntersection intersection)
+    public void showEditIntersectionDialog(Intersection intersection)
     {
         Dialog<Boolean> dialog = new Dialog<>();
         dialog.setTitle("Edit Intersection");
@@ -131,9 +130,9 @@ public class MainController
         grid.setPadding(new Insets(20, 150, 10, 10));
 
         // dialog is based on intersection type
-        if (intersection instanceof TrafficLightIntersection)
+        if (intersection instanceof SignalisedIntersection)
         {
-            TrafficLightIntersection model = (TrafficLightIntersection) intersection;
+            SignalisedIntersection model = (SignalisedIntersection) intersection;
             TextField totalCycleField = new TextField(String.valueOf(model.getTotalCycleTime()));
             TextField yellowField = new TextField(String.valueOf(model.getYellowDuration()));
 
@@ -189,9 +188,9 @@ public class MainController
         }
     }
 
-    private Optional<IIntersection> promptForIntersectionSettings(double x, double y)
+    private Optional<Intersection> promptForIntersectionSettings(double x, double y)
     {
-        Dialog<IIntersection> dialog = new Dialog<>();
+        Dialog<Intersection> dialog = new Dialog<>();
         dialog.setTitle("Configure Intersection");
         dialog.setHeaderText("Set properties for the new intersection.");
 
@@ -252,7 +251,7 @@ public class MainController
                     {
                         double totalTime = Double.parseDouble(param1Field.getText());
                         double yellow = Double.parseDouble(param2Field.getText());
-                        TrafficLightIntersection intersection = new TrafficLightIntersection(x, y, totalTime, yellow);
+                        SignalisedIntersection intersection = new SignalisedIntersection(x, y, totalTime, yellow);
                         return intersection;
                     } else if ("Roundabout".equals(type))
                     {

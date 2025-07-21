@@ -5,8 +5,8 @@ module trafficsim
     requires org.jfxtras.styles.jmetro;
     requires javafx.graphics;
 
-    opens trafficsim.controller to javafx.fxml;
+    opens trafficsim.ui.controller to javafx.fxml;
 
-    exports trafficsim;
-    exports trafficsim.controller;
+    exports trafficsim.app;
+    exports trafficsim.ui.controller;
 }

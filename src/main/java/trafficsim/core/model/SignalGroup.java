@@ -1,4 +1,4 @@
-package trafficsim.model;
+package trafficsim.core.model;
 
 import java.util.UUID;
 import javafx.beans.property.ObjectProperty;

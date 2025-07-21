@@ -1,14 +1,14 @@
-package trafficsim.view.intersection;
+package trafficsim.ui.view.intersection;
 
 import java.util.function.Consumer;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import trafficsim.controller.MainController;
-import trafficsim.model.IIntersection;
+import trafficsim.core.model.Intersection;
+import trafficsim.ui.controller.MainController;
 
-public class TrafficLightIntersectionView extends IntersectionView
+public class SignalisedIntersectionView extends IntersectionView
 {
-    public TrafficLightIntersectionView(IIntersection model, Consumer<IIntersection> editAction,
+    public SignalisedIntersectionView(Intersection model, Consumer<Intersection> editAction,
             MainController controller)
     {
         super(model, editAction, controller);

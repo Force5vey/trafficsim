@@ -1,4 +1,4 @@
-package trafficsim.view;
+package trafficsim.ui.view;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,24 +8,24 @@ import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import trafficsim.controller.MainController;
-import trafficsim.model.Car;
-import trafficsim.model.IIntersection;
-import trafficsim.model.Roundabout;
-import trafficsim.model.TrafficLightIntersection;
-import trafficsim.service.SimulationService;
-import trafficsim.view.intersection.IntersectionView;
-import trafficsim.view.intersection.RoundaboutView;
-import trafficsim.view.intersection.TrafficLightIntersectionView;
+import trafficsim.core.model.Car;
+import trafficsim.core.model.Intersection;
+import trafficsim.core.model.Roundabout;
+import trafficsim.core.model.SignalisedIntersection;
+import trafficsim.core.sim.SimulationEngine;
+import trafficsim.ui.controller.MainController;
+import trafficsim.ui.view.intersection.IntersectionView;
+import trafficsim.ui.view.intersection.RoundaboutView;
+import trafficsim.ui.view.intersection.SignalisedIntersectionView;
 
 public class SimulationRenderer
 {
     private final Pane simulationPane;
-    private final SimulationService simulationService;
+    private final SimulationEngine simulationService;
     private final MainController controller;
-    private final Map<IIntersection, Node> intersectionViewMap = new HashMap<>();
+    private final Map<Intersection, Node> intersectionViewMap = new HashMap<>();
 
-    public SimulationRenderer(Pane simulationPane, SimulationService simulationService, MainController controller)
+    public SimulationRenderer(Pane simulationPane, SimulationEngine simulationService, MainController controller)
     {
         this.simulationPane = simulationPane;
         this.simulationService = simulationService;
@@ -62,13 +62,13 @@ public class SimulationRenderer
         }
     }
 
-    private void onIntersectionModelChanged(ListChangeListener.Change<? extends IIntersection> c)
+    private void onIntersectionModelChanged(ListChangeListener.Change<? extends Intersection> c)
     {
         while (c.next())
         {
             if (c.wasRemoved())
             {
-                for (IIntersection removed : c.getRemoved())
+                for (Intersection removed : c.getRemoved())
                 {
                     Node view = intersectionViewMap.remove(removed);
                     if (view != null)
@@ -80,7 +80,7 @@ public class SimulationRenderer
 
             if (c.wasAdded())
             {
-                for (IIntersection addedIntersection : c.getAddedSubList())
+                for (Intersection addedIntersection : c.getAddedSubList())
                 {
                     createViewForIntersection(addedIntersection);
                 }
@@ -99,15 +99,15 @@ public class SimulationRenderer
         simulationPane.getChildren().add(carView);
     }
 
-    private void createViewForIntersection(IIntersection intersection)
+    private void createViewForIntersection(Intersection intersection)
     {
         IntersectionView view = null;
 
-        Consumer<IIntersection> editCallback = controller::showEditIntersectionDialog;
+        Consumer<Intersection> editCallback = controller::showEditIntersectionDialog;
 
-        if (intersection instanceof TrafficLightIntersection)
+        if (intersection instanceof SignalisedIntersection)
         {
-            view = new TrafficLightIntersectionView(intersection, editCallback, controller);
+            view = new SignalisedIntersectionView(intersection, editCallback, controller);
         } else if (intersection instanceof Roundabout)
         {
             view = new RoundaboutView(intersection, editCallback, controller);

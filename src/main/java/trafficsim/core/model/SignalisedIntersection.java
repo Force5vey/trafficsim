@@ -1,4 +1,4 @@
-package trafficsim.model;
+package trafficsim.core.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -6,7 +6,7 @@ import java.util.List;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 
-public class TrafficLightIntersection implements IIntersection
+public class SignalisedIntersection implements Intersection
 {
     // Position Properties
     private final DoubleProperty positionX = new SimpleDoubleProperty();
@@ -21,7 +21,7 @@ public class TrafficLightIntersection implements IIntersection
     private int currentPhaseIndex = 0;
     private double phaseTimer = 0;
 
-    public TrafficLightIntersection(double x, double y, double totalCycleTime, double yellowDuration)
+    public SignalisedIntersection(double x, double y, double totalCycleTime, double yellowDuration)
     {
         this.positionX.set(x);
         this.positionY.set(y);

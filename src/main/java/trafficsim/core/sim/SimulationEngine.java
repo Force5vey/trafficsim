@@ -1,7 +1,4 @@
-package trafficsim.service;
-
-import trafficsim.model.IIntersection;
-import trafficsim.model.Car;
+package trafficsim.core.sim;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
@@ -13,10 +10,12 @@ import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import trafficsim.core.model.Car;
+import trafficsim.core.model.Intersection;
 
 import java.util.ArrayList;
 
-public class SimulationService
+public class SimulationEngine
 {
     private ScheduledExecutorService executor;
     private final long tickRateMillis = 16; // ~60fps
@@ -27,8 +26,8 @@ public class SimulationService
     // TODO: Car will need updating to intersection list type
     private final ObservableList<Car> cars = FXCollections.observableArrayList();
 
-    private final CopyOnWriteArrayList<IIntersection> intersectionsList = new CopyOnWriteArrayList<>();
-    private final ObservableList<IIntersection> intersections = FXCollections.observableArrayList(intersectionsList);
+    private final CopyOnWriteArrayList<Intersection> intersectionsList = new CopyOnWriteArrayList<>();
+    private final ObservableList<Intersection> intersections = FXCollections.observableArrayList(intersectionsList);
 
     public void start()
     {
@@ -66,17 +65,17 @@ public class SimulationService
         return cars;
     }
 
-    public void addIntersection(IIntersection intersection)
+    public void addIntersection(Intersection intersection)
     {
         intersections.add(intersection);
     }
 
-    public void removeIntersection(IIntersection intersection)
+    public void removeIntersection(Intersection intersection)
     {
         intersections.remove(intersection);
     }
 
-    public ObservableList<IIntersection> getIntersections()
+    public ObservableList<Intersection> getIntersections()
     {
         return intersections;
     }
@@ -97,7 +96,7 @@ public class SimulationService
             car.update(deltaTime);
         }
 
-        for (IIntersection intersection : intersections)
+        for (Intersection intersection : intersections)
         {
             intersection.update(deltaTime);
         }

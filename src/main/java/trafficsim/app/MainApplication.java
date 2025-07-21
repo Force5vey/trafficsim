@@ -1,4 +1,4 @@
-package trafficsim;
+package trafficsim.app;
 
 import java.io.IOException;
 import javafx.application.Application;

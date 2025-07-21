@@ -1,22 +1,22 @@
-package trafficsim.view.intersection;
+package trafficsim.ui.view.intersection;
 
 import java.util.function.Consumer;
 import javafx.scene.Cursor;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import trafficsim.controller.MainController;
-import trafficsim.controller.MainController.InteractionMode;
-import trafficsim.model.IIntersection;
+import trafficsim.core.model.Intersection;
+import trafficsim.ui.controller.MainController;
+import trafficsim.ui.controller.MainController.InteractionMode;
 
 public class IntersectionView extends Region
 {
-    protected IIntersection model;
+    protected Intersection model;
     protected Circle highlight;
 
     private static final double HIGHLIGHT_RADIUS = 40;
 
-    public IntersectionView(IIntersection model, Consumer<IIntersection> editAction, MainController controller)
+    public IntersectionView(Intersection model, Consumer<Intersection> editAction, MainController controller)
     {
         this.model = model;
 
@@ -55,7 +55,7 @@ public class IntersectionView extends Region
         });
     }
 
-    public IIntersection getModel()
+    public Intersection getModel()
     {
         return model;
     }

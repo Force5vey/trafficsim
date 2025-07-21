@@ -1,8 +1,8 @@
-package trafficsim.model;
+package trafficsim.core.model;
 
 import javafx.beans.property.DoubleProperty;
 
-public interface IIntersection
+public interface Intersection
 {
     void update(double deltaTime);
 

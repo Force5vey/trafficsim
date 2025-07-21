@@ -1,14 +1,14 @@
-package trafficsim.view.intersection;
+package trafficsim.ui.view.intersection;
 
 import java.util.function.Consumer;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import trafficsim.controller.MainController;
-import trafficsim.model.IIntersection;
+import trafficsim.core.model.Intersection;
+import trafficsim.ui.controller.MainController;
 
 public class RoundaboutView extends IntersectionView
 {
-    public RoundaboutView(IIntersection model, Consumer<IIntersection> editAction, MainController controller)
+    public RoundaboutView(Intersection model, Consumer<Intersection> editAction, MainController controller)
     {
         super(model, editAction, controller);
 
