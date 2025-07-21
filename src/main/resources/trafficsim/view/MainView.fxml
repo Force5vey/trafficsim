@@ -22,10 +22,10 @@
                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
             </padding>
             <children>
-                <Label text="Intersection Type:" />
-                <ComboBox fx:id="intersectionTypeComboBox" />
                 <Button fx:id="addIntersectionButton" onAction="#handleAddIntersectionRequest"
                     text="Add Intersection" />
+                <Button fx:id="addRoadButton" onAction="#handleAddRoadRequest" text="Add Road" />
+
             </children>
         </HBox>
     </top>
@@ -47,8 +47,8 @@
                             text="Stop" />
                     </children>
                 </HBox>
-
-                <Label fx:id="timeLabel">
+                <!-- added style...might need to checkthe tag-->
+                <Label fx:id="timeLabel" style="-fx-foreground-color: #3e3e3e;">
                     <font>
                         <Font size="18.0" />
                     </font>

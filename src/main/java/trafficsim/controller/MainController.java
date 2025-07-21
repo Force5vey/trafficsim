@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 
 import java.text.NumberFormat;
 import java.util.Optional;
@@ -26,6 +27,8 @@ import trafficsim.view.SimulationRenderer;
 
 public class MainController
 {
+    private static final double MIN_PLACEMENT_DISTANCE = 50.0;
+
     @FXML
     private Pane simulationPane;
     @FXML
@@ -37,17 +40,13 @@ public class MainController
     @FXML
     private Label timeLabel;
     @FXML
-    private ComboBox<String> intersectionTypeComboBox;
-    @FXML
     private Button addIntersectionButton;
+    @FXML
+    private Button addRoadButton;
 
     private SimulationService simulationService;
     private SimulationRenderer simulationRenderer;
     private boolean isPlacingIntersection = false;
-
-    public enum intersectionType {
-        TRAFFIC_LIGHT, ROUNDABOUT
-    }
 
     @FXML
     public void initialize()
@@ -59,11 +58,7 @@ public class MainController
 
         setupInitialCar();
 
-        intersectionTypeComboBox.getItems().setAll("Traffic Light", "Roundabout");
-        intersectionTypeComboBox.getSelectionModel().selectFirst();
-
         simulationPane.setOnMouseClicked(this::handlePaneClick);
-
     }
 
     private void handlePaneClick(MouseEvent event)
@@ -72,9 +67,20 @@ public class MainController
         {
             double x = event.getX();
             double y = event.getY();
-            String selectedType = intersectionTypeComboBox.getValue();
 
-            Optional<IIntersection> newIntersection = promptForIntersectionSettings(selectedType, x, y);
+            for (IIntersection existing : simulationService.getIntersections())
+            {
+                double distance = Math
+                        .sqrt(Math.pow(existing.getPositionX() - x, 2) + Math.pow(existing.getPositionY() - y, 2));
+                if (distance < MIN_PLACEMENT_DISTANCE)
+                {
+                    // TODO: have a visual clue that it is too close to an existing intersection
+                    System.err.println("Cannot place intersection: Too close to another.");
+                    return;
+                }
+            }
+
+            Optional<IIntersection> newIntersection = promptForIntersectionSettings(x, y);
 
             newIntersection.ifPresent(simulationService::addIntersection);
 
@@ -90,11 +96,18 @@ public class MainController
         simulationPane.getScene().setCursor(javafx.scene.Cursor.CROSSHAIR);
     }
 
-    private Optional<IIntersection> promptForIntersectionSettings(String type, double x, double y)
+    @FXML
+    private void handleAddRoadRequest()
+    {
+        // TODO: add road stuff
+        System.out.println("Enterying road drawing mode...");
+    }
+
+    private Optional<IIntersection> promptForIntersectionSettings(double x, double y)
     {
         Dialog<IIntersection> dialog = new Dialog<>();
         dialog.setTitle("Configure Intersection");
-        dialog.setHeaderText("Set properties for the new " + type);
+        dialog.setHeaderText("Set properties for the new intersection.");
 
         ButtonType createButtonType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(createButtonType, ButtonType.CANCEL);
@@ -104,59 +117,70 @@ public class MainController
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
 
-        if ("Traffic Light".equals(type))
+        ComboBox<String> typeComboBox = new ComboBox<>();
+        typeComboBox.getItems().setAll("Traffic Light", "Roundabout");
+
+        TextField param1Field = new TextField();
+        Label param1Label = new Label();
+        TextField param2Field = new TextField();
+        Label param2Label = new Label();
+
+        grid.add(new Label("Type:"), 0, 0);
+        grid.add(typeComboBox, 1, 0);
+
+        grid.add(param1Label, 0, 1);
+        grid.add(param1Field, 1, 1);
+        grid.add(param2Label, 0, 2);
+        grid.add(param2Field, 1, 2);
+
+        typeComboBox.valueProperty().addListener((obs, oldVal, newVal) ->
         {
-            TextField greenDuration = new TextField("10");
-            TextField yellowDuration = new TextField("3");
-
-            grid.add(new Label("Green Duration (s):"), 0, 0);
-            grid.add(greenDuration, 1, 0);
-            grid.add(new Label("Yellow Duration (s):"), 0, 1);
-            grid.add(yellowDuration, 1, 1);
-
-            dialog.getDialogPane().setContent(grid);
-
-            dialog.setResultConverter(dialogButton ->
+            if ("Traffic Light".equals(newVal))
             {
-                if (dialogButton == createButtonType)
+                param1Label.setText("Green (s):");
+                param1Field.setText("10");
+                param2Label.setText("Yellow (s):");
+                param2Field.setText("3");
+                param2Label.setVisible(true);
+                param2Field.setVisible(true);
+            } else if ("Roundabout".equals(newVal))
+            {
+                param1Label.setText("Speed (px/s):");
+                param1Field.setText("25");
+                param2Label.setVisible(false);
+                param2Field.setVisible(false);
+            }
+        });
+
+        typeComboBox.getSelectionModel().selectFirst();
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton ->
+        {
+            if (dialogButton == createButtonType)
+            {
+                try
                 {
-                    try
+                    String type = typeComboBox.getValue();
+                    if ("Traffic Light".equals(type))
                     {
-                        double green = Double.parseDouble(greenDuration.getText());
-                        double yellow = Double.parseDouble(yellowDuration.getText());
+                        double green = Double.parseDouble(param1Field.getText());
+                        double yellow = Double.parseDouble(param2Field.getText());
                         return new TrafficLightIntersection(x, y, green, yellow);
-                    } catch (NumberFormatException e)
+                    } else if ("Roundabout".equals(type))
                     {
-                        return null;
-                    }
-                }
-                return null;
-            });
-        } else if ("Roundabout".equals(type))
-        {
-            TextField speedLimit = new TextField("25");
-
-            grid.add(new Label("Speed Limit (px/s):"), 0, 0);
-            grid.add(speedLimit, 1, 0);
-
-            dialog.getDialogPane().setContent(grid);
-
-            dialog.setResultConverter(dialogButton ->
-            {
-                if (dialogButton == createButtonType)
-                {
-                    try
-                    {
-                        double speed = Double.parseDouble(speedLimit.getText());
+                        double speed = Double.parseDouble(param1Field.getText());
                         return new Roundabout(x, y, speed);
-                    } catch (NumberFormatException e)
-                    {
-                        return null;
                     }
+                } catch (NumberFormatException e)
+                {
+                    System.err.println("Invalid number format in dialog.");
+                    return null;
                 }
-                return null;
-            });
-        }
+            }
+            return null;
+        });
+
         return dialog.showAndWait();
     }
 
