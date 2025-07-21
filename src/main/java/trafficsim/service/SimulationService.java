@@ -14,7 +14,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class SimulationService
 {
@@ -24,7 +23,7 @@ public class SimulationService
     private final LongProperty simulationTime = new SimpleLongProperty(0);
     private final AtomicLong internalTimeMillis = new AtomicLong(0);
 
-    private final List<Car> cars = new ArrayList<>();
+    private final ObservableList<Car> cars = FXCollections.observableArrayList();
     private final ObservableList<IIntersection> intersections = FXCollections.observableArrayList();
 
     public void start()
@@ -54,8 +53,13 @@ public class SimulationService
 
     public void addCar(Car car)
     {
-        // needs updating to be thread safe, for now just assume before simulation starts
+        // TODO: needs updating to be thread safe, for now just assume before simulation starts
         cars.add(car);
+    }
+
+    public ObservableList<Car> getCars()
+    {
+        return cars;
     }
 
     public void addIntersection(IIntersection intersection)
@@ -78,9 +82,9 @@ public class SimulationService
             Platform.runLater(() -> simulationTime.set(currentTime / 1000));
         }
 
-        for (Car car : cars)
+        for (Car car : new ArrayList<>(cars))
         {
-            // update logic isn't thread safe, all needs to be updated to be.
+            //TODO: update logic isn't thread safe, all needs to be updated to be.
             car.update(deltaTime);
         }
 
@@ -88,8 +92,6 @@ public class SimulationService
         {
             intersection.update(deltaTime);
         }
-
-        // Update all model objects (cars, intersections)
     }
 
     public LongProperty simulationTimeProperty()

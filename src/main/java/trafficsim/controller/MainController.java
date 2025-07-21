@@ -22,6 +22,7 @@ import trafficsim.service.SimulationService;
 import trafficsim.model.IIntersection;
 import trafficsim.model.Roundabout;
 import trafficsim.model.TrafficLightIntersection;
+import trafficsim.view.SimulationRenderer;
 
 public class MainController
 {
@@ -41,6 +42,7 @@ public class MainController
     private Button addIntersectionButton;
 
     private SimulationService simulationService;
+    private SimulationRenderer simulationRenderer;
     private boolean isPlacingIntersection = false;
 
     public enum intersectionType {
@@ -51,10 +53,10 @@ public class MainController
     public void initialize()
     {
         this.simulationService = new SimulationService();
+        this.simulationRenderer = new SimulationRenderer(simulationPane, simulationService);
 
         timeLabel.textProperty().bind(simulationService.simulationTimeProperty().asString("Time: %d s"));
 
-        drawRoad();
         setupInitialCar();
 
         intersectionTypeComboBox.getItems().setAll("Traffic Light", "Roundabout");
@@ -62,20 +64,6 @@ public class MainController
 
         simulationPane.setOnMouseClicked(this::handlePaneClick);
 
-        simulationService.getIntersections().addListener((ListChangeListener<IIntersection>) c ->
-        {
-            while (c.next())
-            {
-                if (c.wasAdded())
-                {
-                    for (IIntersection added : c.getAddedSubList())
-                    {
-                        createViewForIntersection(added);
-                    }
-                }
-                // handle c.wasRemoved() for deletion logic
-            }
-        });
     }
 
     private void handlePaneClick(MouseEvent event)
@@ -88,10 +76,7 @@ public class MainController
 
             Optional<IIntersection> newIntersection = promptForIntersectionSettings(selectedType, x, y);
 
-            newIntersection.ifPresent(IIntersection ->
-            {
-                simulationService.addIntersection(IIntersection);
-            });
+            newIntersection.ifPresent(simulationService::addIntersection);
 
             isPlacingIntersection = false;
             simulationPane.getScene().setCursor(javafx.scene.Cursor.DEFAULT);
@@ -103,42 +88,6 @@ public class MainController
     {
         isPlacingIntersection = true;
         simulationPane.getScene().setCursor(javafx.scene.Cursor.CROSSHAIR);
-    }
-
-    private void createViewForIntersection(IIntersection intersection)
-    {
-        Node view = null;
-        if (intersection instanceof TrafficLightIntersection)
-        {
-            Rectangle lightView = new Rectangle(10, 40);
-            lightView.setFill(Color.DARKSLATEGRAY);
-            // TODO: bind fill to the lightState properties
-            view = lightView;
-        } else if (intersection instanceof Roundabout)
-        {
-            Circle roundaboutView = new Circle(30, Color.DARKGRAY);
-            roundaboutView.setStroke(Color.WHITE);
-            view = roundaboutView;
-        }
-
-        if (view != null)
-        {
-            view.layoutXProperty().bind(intersection.positionXProperty());
-            view.layoutYProperty().bind(intersection.positionYProperty());
-            simulationPane.getChildren().add(view);
-
-            Node finalView = view;
-            view.setOnMouseClicked(event ->
-            {
-                if (!isPlacingIntersection)
-                {
-                    // prevent editing while in placement moe
-                    // TODO: implement live editing dialog
-                    System.out.println("Editing " + intersection.getClass().getSimpleName());
-                    event.consume();
-                }
-            });
-        }
     }
 
     private Optional<IIntersection> promptForIntersectionSettings(String type, double x, double y)
@@ -211,14 +160,6 @@ public class MainController
         return dialog.showAndWait();
     }
 
-    private void drawRoad()
-    {
-        // Placeholder for future robust road drawing method    
-        Rectangle road = new Rectangle(0, 335, 1280, 50);
-        road.setFill(Color.GRAY);
-        simulationPane.getChildren().add(road);
-    }
-
     private void setupInitialCar()
     {
         Car carModel = new Car();
@@ -227,15 +168,6 @@ public class MainController
 
         simulationService.addCar(carModel);
 
-        Rectangle carView = new Rectangle(40, 20);
-        carView.setFill(Color.CORNFLOWERBLUE);
-
-        carView.xProperty().bind(carModel.xPositionProperty());
-        carView.setY(350);
-
-        simulationPane.getChildren().add(carView);
-
-        // Needs proper model management system integrated
     }
 
     @FXML
