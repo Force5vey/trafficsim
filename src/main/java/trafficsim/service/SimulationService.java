@@ -8,6 +8,10 @@ import javafx.application.Platform;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
 
+import trafficsim.model.Car;
+import java.util.ArrayList;
+import java.util.List;
+
 public class SimulationService
 {
     private ScheduledExecutorService executor;
@@ -15,6 +19,8 @@ public class SimulationService
 
     private final LongProperty simulationTime = new SimpleLongProperty(0);
     private final AtomicLong internalTimeMillis = new AtomicLong(0);
+
+    private final List<Car> cars = new ArrayList<>();
 
     public void start()
     {
@@ -41,6 +47,12 @@ public class SimulationService
         // further reset will be needed
     }
 
+    public void addCar(Car car)
+    {
+        // needs updating to be thread safe, for now just assume before simulation starts
+        cars.add(car);
+    }
+
     private void simulationStep()
     {
         long currentTime = internalTimeMillis.addAndGet(tickRateMillis);
@@ -49,6 +61,12 @@ public class SimulationService
         if (currentTime / 1000 != simulationTime.get())
         {
             Platform.runLater(() -> simulationTime.set(currentTime / 1000));
+        }
+
+        for (Car car : cars)
+        {
+            // update logic isn't thread safe, all needs to be updated to be.
+            car.update(deltaTime);
         }
 
         // Update all model objects (cars, intersections)
