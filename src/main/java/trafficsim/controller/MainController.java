@@ -134,19 +134,26 @@ public class MainController
         if (intersection instanceof TrafficLightIntersection)
         {
             TrafficLightIntersection model = (TrafficLightIntersection) intersection;
-            TextField green = new TextField(String.valueOf(model.getGreenDuration()));
-            TextField yellow = new TextField(String.valueOf(model.getYellowDuration()));
-            grid.add(new Label("Green (s):"), 0, 0);
-            grid.add(green, 1, 0);
+            TextField totalCycleField = new TextField(String.valueOf(model.getTotalCycleTime()));
+            TextField yellowField = new TextField(String.valueOf(model.getYellowDuration()));
+
+            grid.add(new Label("Total Cycle (s):"), 0, 0);
+            grid.add(totalCycleField, 1, 0);
             grid.add(new Label("Yellow (s):"), 0, 1);
-            grid.add(yellow, 1, 1);
+            grid.add(yellowField, 1, 1);
 
             dialog.setResultConverter(btn ->
             {
                 if (btn == updateButtonType)
                 {
-                    model.setGreenDuration(Double.parseDouble(green.getText()));
-                    model.setYellowDuration(Double.parseDouble(yellow.getText()));
+                    try
+                    {
+                        model.setTotalCycleTime(Double.parseDouble(totalCycleField.getText()));
+                        model.setYellowDuration(Double.parseDouble(yellowField.getText()));
+                    } catch (NumberFormatException e)
+                    {
+                        System.err.println("Invalid number format in edit dialog.");
+                    }
                 }
                 return btn == deleteButtonType;
             });
@@ -161,7 +168,13 @@ public class MainController
             {
                 if (btn == updateButtonType)
                 {
-                    model.setSpeedLimit(Double.parseDouble(speed.getText()));
+                    try
+                    {
+                        model.setSpeedLimit(Double.parseDouble(speed.getText()));
+                    } catch (NumberFormatException e)
+                    {
+                        System.err.println("Invalid number format in edit dialog.");
+                    }
                 }
                 return btn == deleteButtonType;
             });
@@ -210,8 +223,8 @@ public class MainController
         {
             if ("Traffic Light".equals(newVal))
             {
-                param1Label.setText("Green (s):");
-                param1Field.setText("10");
+                param1Label.setText("Total Cycle (s):");
+                param1Field.setText("40");
                 param2Label.setText("Yellow (s):");
                 param2Field.setText("3");
                 param2Label.setVisible(true);
@@ -237,9 +250,10 @@ public class MainController
                     String type = typeComboBox.getValue();
                     if ("Traffic Light".equals(type))
                     {
-                        double green = Double.parseDouble(param1Field.getText());
+                        double totalTime = Double.parseDouble(param1Field.getText());
                         double yellow = Double.parseDouble(param2Field.getText());
-                        return new TrafficLightIntersection(x, y, green, yellow);
+                        TrafficLightIntersection intersection = new TrafficLightIntersection(x, y, totalTime, yellow);
+                        return intersection;
                     } else if ("Roundabout".equals(type))
                     {
                         double speed = Double.parseDouble(param1Field.getText());
