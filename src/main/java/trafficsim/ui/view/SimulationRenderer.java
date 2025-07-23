@@ -1,122 +1,154 @@
 package trafficsim.ui.view;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
-import javafx.collections.ListChangeListener;
+import javafx.animation.AnimationTimer;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
-import trafficsim.core.model.Car;
-import trafficsim.core.model.Intersection;
-import trafficsim.core.model.Roundabout;
-import trafficsim.core.model.SignalisedIntersection;
+import javafx.scene.transform.Rotate;
+
+import trafficsim.core.model.*;
 import trafficsim.core.sim.SimulationEngine;
+import trafficsim.ui.adapter.*;
 import trafficsim.ui.controller.MainController;
-import trafficsim.ui.view.intersection.IntersectionView;
-import trafficsim.ui.view.intersection.RoundaboutView;
-import trafficsim.ui.view.intersection.SignalisedIntersectionView;
+import trafficsim.ui.view.intersection.*;
+
+import java.util.*;
+import java.util.function.Consumer;
 
 public class SimulationRenderer
 {
-    private final Pane simulationPane;
-    private final SimulationEngine simulationService;
+    private final Pane root;
+    private final SimulationEngine engine;
     private final MainController controller;
-    private final Map<Intersection, Node> intersectionViewMap = new HashMap<>();
 
-    public SimulationRenderer(Pane simulationPane, SimulationEngine simulationService, MainController controller)
+    private final Map<Car, Rectangle> carViews = new HashMap<>();
+    private final Map<Car, CarAdapter> carAdapters = new HashMap<>();
+    private final Map<Intersection, Node> intersectionViews = new HashMap<>();
+    private final Map<Road, Line> roadViews = new HashMap<>();
+
+    public SimulationRenderer(Pane root, SimulationEngine engine, MainController controller)
     {
-        this.simulationPane = simulationPane;
-        this.simulationService = simulationService;
+        this.root = root;
+        this.engine = engine;
         this.controller = controller;
 
-        drawRoad();
-
-        this.simulationService.getCars().addListener(this::onCarModelChanged);
-        this.simulationService.getIntersections().addListener(this::onIntersectionModelChanged);
-    }
-
-    private void drawRoad()
-    {
-        Rectangle road = new Rectangle(0, 335, 1280, 50); //TODO, needs to get sized to waht the Pae size is.
-        road.setFill(Color.GRAY);
-        simulationPane.getChildren().add(road);
-    }
-
-    private void onCarModelChanged(ListChangeListener.Change<? extends Car> c)
-    {
-        while (c.next())
-        {
-            if (c.wasRemoved())
+        new AnimationTimer() {
+            @Override
+            public void handle(long now)
             {
-                // TODO: view removal logic here
+                refreshFrame();
             }
-            if (c.wasAdded())
-            {
-                for (Car addedCar : c.getAddedSubList())
-                {
-                    createViewForCar(addedCar);
-                }
-            }
-        }
+        }.start();
     }
 
-    private void onIntersectionModelChanged(ListChangeListener.Change<? extends Intersection> c)
+    public void onIntersectionAdded(Intersection intersection)
     {
-        while (c.next())
-        {
-            if (c.wasRemoved())
-            {
-                for (Intersection removed : c.getRemoved())
-                {
-                    Node view = intersectionViewMap.remove(removed);
-                    if (view != null)
-                    {
-                        simulationPane.getChildren().remove(view);
-                    }
-                }
-            }
-
-            if (c.wasAdded())
-            {
-                for (Intersection addedIntersection : c.getAddedSubList())
-                {
-                    createViewForIntersection(addedIntersection);
-                }
-            }
-        }
+        Node view = buildView(intersection);
+        intersectionViews.put(intersection, view);
+        root.getChildren().add(view);
     }
 
-    private void createViewForCar(Car carModel)
+    public void removeIntersection(Intersection intersection)
     {
-        Rectangle carView = new Rectangle(40, 20);
-        carView.setFill(Color.CORNFLOWERBLUE);
-
-        carView.xProperty().bind(carModel.xPositionProperty());
-        carView.setY(350);
-
-        simulationPane.getChildren().add(carView);
-    }
-
-    private void createViewForIntersection(Intersection intersection)
-    {
-        IntersectionView view = null;
-
-        Consumer<Intersection> editCallback = controller::showEditIntersectionDialog;
-
-        if (intersection instanceof SignalisedIntersection)
-        {
-            view = new SignalisedIntersectionView(intersection, editCallback, controller);
-        } else if (intersection instanceof Roundabout)
-        {
-            view = new RoundaboutView(intersection, editCallback, controller);
-        }
-
+        Node view = intersectionViews.remove(intersection);
         if (view != null)
         {
-            intersectionViewMap.put(intersection, view);
-            simulationPane.getChildren().add(view);
+            root.getChildren().remove(view);
         }
+    }
+
+    public void removeRoad(Road road)
+    {
+        Node view = roadViews.remove(road);
+        if (view != null)
+        {
+            root.getChildren().remove(view);
+        }
+    }
+
+    public void onRoadAdded(Road road)
+    {
+        Line line = buildRoadView(road);
+        roadViews.put(road, line);
+        root.getChildren().add(1, line);
+    }
+
+    public void onCarAdded(Car car)
+    {
+        Rectangle view = buildCarView(car);
+        carViews.put(car, view);
+        carAdapters.put(car, new CarAdapter(car));
+        root.getChildren().add(view);
+    }
+
+    private void refreshFrame()
+    {
+        for (Map.Entry<Car, CarAdapter> e : carAdapters.entrySet())
+        {
+            CarAdapter adapter = e.getValue();
+            adapter.pullFromModel();
+
+            Rectangle view = carViews.get(e.getKey());
+            view.setX(adapter.xProperty().get());
+            view.setY(adapter.yProperty().get());
+        }
+    }
+
+    //--------------------------------------------------------------
+
+    private Rectangle buildCarView(Car car)
+    {
+        Rectangle r = new Rectangle(40, 20);
+        r.setFill(Color.CORNFLOWERBLUE);
+        return r;
+    }
+
+    private Node buildView(Intersection intersection)
+    {
+        Consumer<Intersection> editCallback = controller::showEditIntersectionDialog;
+        if (intersection instanceof SignalisedIntersection)
+        {
+            return new SignalisedIntersectionView(intersection, editCallback, controller);
+        } else if (intersection instanceof Roundabout)
+        {
+            return new RoundaboutView(intersection, editCallback, controller);
+        } else
+        {
+            throw new IllegalArgumentException("unknown intersection type");
+        }
+    }
+
+    private Line buildRoadView(Road road)
+    {
+        double fromX = IntersectionUtil.toPx(road.from().position().x);
+        double fromY = IntersectionUtil.toPx(road.from().position().y);
+        double toX = IntersectionUtil.toPx(road.to().position().x);
+        double toY = IntersectionUtil.toPx(road.to().position().y);
+
+        Line line = new Line(fromX, fromY, toX, toY);
+        line.setStrokeWidth(12);
+        line.setStroke(Color.DIMGRAY);
+
+        line.setOnMouseEntered(e ->
+        {
+            line.setStroke(Color.ORANGE);
+            root.getScene().setCursor(Cursor.HAND);
+        });
+        line.setOnMouseExited(e ->
+        {
+            line.setStroke(Color.DIMGRAY);
+            root.getScene().setCursor(Cursor.DEFAULT);
+        });
+        line.setOnMouseClicked(e -> controller.showEditRoadDialog(road));
+
+        return line;
+    }
+
+    public Collection<Intersection> getIntersections()
+    {
+        return Collections.unmodifiableSet(intersectionViews.keySet());
     }
 }

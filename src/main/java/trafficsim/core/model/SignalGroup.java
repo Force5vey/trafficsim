@@ -1,37 +1,24 @@
 package trafficsim.core.model;
 
 import java.util.UUID;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 
-public class SignalGroup
+public final class SignalGroup
 {
-    private final UUID id;
-    private final ObjectProperty<TrafficLightState> state;
+    private final UUID id = UUID.randomUUID();
+    private TrafficLightState state = TrafficLightState.RED;
 
-    public SignalGroup()
-    {
-        this.id = UUID.randomUUID();
-        this.state = new SimpleObjectProperty<>(TrafficLightState.RED);
-    }
-
-    public UUID getId()
+    public UUID id()
     {
         return id;
     }
 
-    public TrafficLightState getState()
+    public TrafficLightState state()
     {
-        return state.get();
+        return state;
     }
 
     public void setState(TrafficLightState state)
     {
-        this.state.set(state);
-    }
-
-    public ObjectProperty<TrafficLightState> stateProperty()
-    {
-        return state;
+        this.state = state;
     }
 }

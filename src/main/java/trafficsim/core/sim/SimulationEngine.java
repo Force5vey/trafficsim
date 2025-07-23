@@ -1,109 +1,95 @@
 package trafficsim.core.sim;
 
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import trafficsim.core.model.*;
+
+import java.util.List;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
-import javafx.application.Platform;
-import javafx.beans.property.LongProperty;
-import javafx.beans.property.SimpleLongProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import trafficsim.core.model.Car;
-import trafficsim.core.model.Intersection;
 
-import java.util.ArrayList;
-
-public class SimulationEngine
+public final class SimulationEngine
 {
-    private ScheduledExecutorService executor;
-    private final long tickRateMillis = 16; // ~60fps
+    // timing
+    private static final long TICK_MS = 16; // ~ 60 fps 
+    private final AtomicLong simTimeMillis = new AtomicLong(0);
 
-    private final LongProperty simulationTime = new SimpleLongProperty(0);
-    private final AtomicLong internalTimeMillis = new AtomicLong(0);
+    // threads
+    private ScheduledExecutorService exec;
 
-    // TODO: Car will need updating to intersection list type
-    private final ObservableList<Car> cars = FXCollections.observableArrayList();
-
-    private final CopyOnWriteArrayList<Intersection> intersectionsList = new CopyOnWriteArrayList<>();
-    private final ObservableList<Intersection> intersections = FXCollections.observableArrayList(intersectionsList);
+    // world
+    private final List<Updatable> updatables = new CopyOnWriteArrayList<>();
+    private final RoadNetwork roadNet = new RoadNetwork();
 
     public void start()
     {
-        if (executor == null || executor.isShutdown())
+        if (exec == null || exec.isShutdown())
         {
-            executor = Executors.newSingleThreadScheduledExecutor();
-            executor.scheduleAtFixedRate(this::simulationStep, 0L, tickRateMillis, TimeUnit.MILLISECONDS);
+            exec = Executors.newSingleThreadScheduledExecutor();
+            exec.scheduleAtFixedRate(this::step, 0L, TICK_MS, TimeUnit.MILLISECONDS);
         }
     }
 
     public void pause()
     {
-        if (executor != null && !executor.isShutdown())
-        {
-            executor.shutdown();
-        }
+        if (exec != null && !exec.isShutdown())
+            exec.shutdown();
     }
 
     public void stop()
     {
         pause();
-        internalTimeMillis.set(0);
-        Platform.runLater(() -> simulationTime.set(0));
-        // further reset will be needed
+        simTimeMillis.set(0);
     }
 
-    public void addCar(Car car)
+    public void addVehicle(Car car)
     {
-        // TODO: needs updating to be thread safe, for now just assume before simulation starts
-        cars.add(car);
-    }
-
-    public ObservableList<Car> getCars()
-    {
-        return cars;
+        updatables.add(car);
     }
 
     public void addIntersection(Intersection intersection)
     {
-        intersections.add(intersection);
+        updatables.add(intersection);
     }
 
     public void removeIntersection(Intersection intersection)
     {
-        intersections.remove(intersection);
+        updatables.remove(intersection);
+        //TODO: Remove outbound roads
     }
 
-    public ObservableList<Intersection> getIntersections()
+    public RoadNetwork roadNetwork()
     {
-        return intersections;
+        return roadNet;
     }
 
-    private void simulationStep()
+    public void addRoad(Road road)
     {
-        long currentTime = internalTimeMillis.addAndGet(tickRateMillis);
-        double deltaTime = tickRateMillis / 1000.0; // deltaT in seconds
+        updatables.add(road);
+        roadNet.add(road);
+    }
 
-        if (currentTime / 1000 != simulationTime.get())
-        {
-            Platform.runLater(() -> simulationTime.set(currentTime / 1000));
-        }
+    public void removeRoad(Road road)
+    {
+        updatables.remove(road);
+    }
 
-        for (Car car : new ArrayList<>(cars))
-        {
-            //TODO: update logic isn't thread safe, all needs to be updated to be.
-            car.update(deltaTime);
-        }
+    public void addVehicle(Car car, Road spawnRoad, double spawnOffsetMeters)
+    {
+        car.attachTo(spawnRoad, spawnOffsetMeters);
+        updatables.add(car);
+    }
 
-        for (Intersection intersection : intersections)
+    private void step()
+    {
+        double deltaTime = TICK_MS / 1000.0;
+        simTimeMillis.addAndGet(TICK_MS);
+        for (Updatable u : updatables)
         {
-            intersection.update(deltaTime);
+            u.update(deltaTime);
         }
     }
 
-    public LongProperty simulationTimeProperty()
+    public Long simulationTimeSeconds()
     {
-        return simulationTime;
+        return simTimeMillis.get() / 1000;
     }
 }

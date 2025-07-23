@@ -12,17 +12,21 @@ import javafx.scene.text.Text;
 import java.text.NumberFormat;
 import java.util.Optional;
 import javafx.collections.ListChangeListener;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.shape.Circle;
+
+import trafficsim.core.model.*;
 import trafficsim.core.model.Car;
 import trafficsim.core.model.Intersection;
 import trafficsim.core.model.Roundabout;
 import trafficsim.core.model.SignalisedIntersection;
 import trafficsim.core.model.TrafficLightState;
 import trafficsim.core.sim.SimulationEngine;
+import trafficsim.ui.adapter.IntersectionUtil;
 import trafficsim.ui.view.SimulationRenderer;
 
 public class MainController
@@ -44,7 +48,7 @@ public class MainController
     @FXML
     private Button addRoadButton;
 
-    private SimulationEngine simulationService;
+    private SimulationEngine engine;
     private SimulationRenderer simulationRenderer;
 
     public enum InteractionMode {
@@ -52,16 +56,15 @@ public class MainController
     }
 
     private InteractionMode currentMode = InteractionMode.NORMAL;
+    private Intersection firstPicked = null;
 
     @FXML
     public void initialize()
     {
-        this.simulationService = new SimulationEngine();
-        this.simulationRenderer = new SimulationRenderer(simulationPane, simulationService, this);
+        this.engine = new SimulationEngine();
+        this.simulationRenderer = new SimulationRenderer(simulationPane, engine, this);
 
-        timeLabel.textProperty().bind(simulationService.simulationTimeProperty().asString("Time: %d s"));
-
-        setupInitialCar();
+        // timeLabel.textProperty().bind(engine.simulationTimeProperty().asString("Time: %d s"));
 
         simulationPane.setOnMouseClicked(this::handlePaneClick);
     }
@@ -73,31 +76,29 @@ public class MainController
 
     private void handlePaneClick(MouseEvent event)
     {
-        if (currentMode == InteractionMode.PLACING_INTERSECTION)
+        if (currentMode != InteractionMode.PLACING_INTERSECTION)
         {
-            double x = event.getX();
-            double y = event.getY();
-
-            for (Intersection existing : simulationService.getIntersections())
-            {
-                double distance = Math
-                        .sqrt(Math.pow(existing.getPositionX() - x, 2) + Math.pow(existing.getPositionY() - y, 2));
-                if (distance < MIN_PLACEMENT_DISTANCE)
-                {
-                    // TODO: have a visual clue that it is too close to an existing intersection
-                    // probably just highlight the existing and just "ignore" the click
-                    System.err.println("Cannot place intersection: Too close to another.");
-                    return;
-                }
-            }
-
-            Optional<Intersection> newIntersection = promptForIntersectionSettings(x, y);
-
-            newIntersection.ifPresent(simulationService::addIntersection);
-
-            currentMode = InteractionMode.NORMAL;
-            simulationPane.getScene().setCursor(javafx.scene.Cursor.DEFAULT);
+            return;
         }
+
+        double xWorld = event.getX() / IntersectionUtil.PX_PER_M;
+        double yWorld = event.getY() / IntersectionUtil.PX_PER_M;
+
+        if (!isFarEnough(event.getX(), event.getY()))
+        {
+            showWarning("Too close to another intersection (min " + MIN_PLACEMENT_DISTANCE + " px).");
+            return;
+        }
+
+        Optional<Intersection> opt = promptForIntersectionSettings(xWorld, yWorld);
+        opt.ifPresent(i ->
+        {
+            engine.addIntersection(i);
+            simulationRenderer.onIntersectionAdded(i);
+        });
+
+        currentMode = InteractionMode.NORMAL;
+        simulationPane.getScene().setCursor(Cursor.DEFAULT);
     }
 
     @FXML
@@ -110,8 +111,31 @@ public class MainController
     @FXML
     private void handleAddRoadRequest()
     {
-        // TODO: add road stuff
-        System.out.println("Enterying road drawing mode...");
+        currentMode = InteractionMode.PLACING_ROAD;
+        firstPicked = null;
+        simulationPane.getScene().setCursor(Cursor.CROSSHAIR);
+    }
+
+    public void onIntersectionPickedForRoad(Intersection picked)
+    {
+        if (firstPicked == null)
+        {
+            firstPicked = picked;
+            return;
+        }
+
+        // second intersection
+        Intersection secondPicked = picked;
+        Optional<Road> opt = promptForRoadSettings(firstPicked, secondPicked);
+        opt.ifPresent(r ->
+        {
+            engine.addRoad(r);
+            simulationRenderer.onRoadAdded(r);
+        });
+
+        currentMode = InteractionMode.NORMAL;
+        firstPicked = null;
+        simulationPane.getScene().setCursor(Cursor.DEFAULT);
     }
 
     public void showEditIntersectionDialog(Intersection intersection)
@@ -133,13 +157,13 @@ public class MainController
         if (intersection instanceof SignalisedIntersection)
         {
             SignalisedIntersection model = (SignalisedIntersection) intersection;
-            TextField totalCycleField = new TextField(String.valueOf(model.getTotalCycleTime()));
-            TextField yellowField = new TextField(String.valueOf(model.getYellowDuration()));
+            // TextField totalCycleField = new TextField(String.valueOf(model.getTotalCycleTime()));
+            // TextField yellowField = new TextField(String.valueOf(model.getYellowDuration()));
 
             grid.add(new Label("Total Cycle (s):"), 0, 0);
-            grid.add(totalCycleField, 1, 0);
+            // grid.add(totalCycleField, 1, 0);
             grid.add(new Label("Yellow (s):"), 0, 1);
-            grid.add(yellowField, 1, 1);
+            // grid.add(yellowField, 1, 1);
 
             dialog.setResultConverter(btn ->
             {
@@ -147,8 +171,8 @@ public class MainController
                 {
                     try
                     {
-                        model.setTotalCycleTime(Double.parseDouble(totalCycleField.getText()));
-                        model.setYellowDuration(Double.parseDouble(yellowField.getText()));
+                        // model.setTotalCycleTime(Double.parseDouble(totalCycleField.getText()));
+                        // model.setYellowDuration(Double.parseDouble(yellowField.getText()));
                     } catch (NumberFormatException e)
                     {
                         System.err.println("Invalid number format in edit dialog.");
@@ -184,7 +208,37 @@ public class MainController
 
         if (deleteRequested.isPresent() && deleteRequested.get())
         {
-            simulationService.removeIntersection(intersection);
+            engine.removeIntersection(intersection);
+        }
+    }
+
+    public void showEditRoadDialog(Road road)
+    {
+        Dialog<Boolean> dialog = new Dialog<>();
+        dialog.setTitle("Edit Road");
+        ButtonType update = new ButtonType("Update", ButtonBar.ButtonData.OK_DONE);
+        ButtonType delete = new ButtonType("Delete", ButtonBar.ButtonData.OTHER);
+        dialog.getDialogPane().getButtonTypes().addAll(update, delete, ButtonType.CANCEL);
+
+        GridPane g = new GridPane();
+        TextField spd = new TextField(String.valueOf(road.speedLimit()));
+        g.add(new Label("Speed (m/s):"), 0, 0);
+        g.add(spd, 1, 0);
+        dialog.getDialogPane().setContent(g);
+
+        dialog.setResultConverter(btn ->
+        {
+            if (btn == update)
+            {
+                road.setSpeedLimit(Double.parseDouble(spd.getText()));
+            }
+            return btn == delete;
+        });
+
+        if (dialog.showAndWait().orElse(false))
+        {
+            engine.removeRoad(road);
+            simulationRenderer.removeRoad(road);
         }
     }
 
@@ -270,32 +324,71 @@ public class MainController
         return dialog.showAndWait();
     }
 
-    private void setupInitialCar()
+    private Optional<Road> promptForRoadSettings(Intersection a, Intersection b)
     {
-        Car carModel = new Car();
-        carModel.setXPosition(50);
-        carModel.setSpeed(25); // TODO: establish all speeds at MPH, roads will need mileage scale. Perhaps feet/minute for scaling drawings and then the dsplay speed can just be converted 
+        Dialog<Road> dialog = new Dialog<>();
+        dialog.setTitle("New Road");
+        ButtonType ok = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(ok, ButtonType.CANCEL);
 
-        simulationService.addCar(carModel);
+        GridPane g = new GridPane();
+        g.setHgap(10);
+        g.setVgap(10);
+        TextField speed = new TextField("35");
+        g.add(new Label("Speed limit (m/s):"), 0, 0);
+        g.add(speed, 1, 0);
+        dialog.getDialogPane().setContent(g);
 
+        dialog.setResultConverter(btn ->
+        {
+            if (btn == ok)
+            {
+                double length = a.position().distanceTo(b.position());
+                double velocity = Double.parseDouble(speed.getText());
+                return new Road(a, b, length, velocity);
+            }
+            return null;
+        });
+        return dialog.showAndWait();
+    }
+
+    private boolean isFarEnough(double newPxX, double newPxY)
+    {
+        for (Intersection i : simulationRenderer.getIntersections())
+        {
+            double dx = newPxX - IntersectionUtil.toPx(i.position().x);
+            double dy = newPxY - IntersectionUtil.toPx(i.position().y);
+            if (Math.hypot(dx, dy) < MIN_PLACEMENT_DISTANCE)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void showWarning(String msg)
+    {
+        Alert a = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK);
+        a.setHeaderText(null);
+        a.showAndWait();
     }
 
     @FXML
     private void handleStart()
     {
-        simulationService.start();
+        engine.start();
     }
 
     @FXML
     private void handlePause()
     {
-        simulationService.pause();
+        engine.pause();
     }
 
     @FXML
     private void handleStop()
     {
-        simulationService.stop();
+        engine.stop();
         // need to reset car's visual position here
         // need better model-view synchronization on reset
     }

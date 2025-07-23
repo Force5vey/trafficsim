@@ -3,147 +3,89 @@ package trafficsim.core.model;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 
-public class SignalisedIntersection implements Intersection
+public final class SignalisedIntersection implements Intersection
 {
-    // Position Properties
-    private final DoubleProperty positionX = new SimpleDoubleProperty();
-    private final DoubleProperty positionY = new SimpleDoubleProperty();
+    private final Vec2 position;
 
-    private final DoubleProperty totalCycleTime;
-    private final DoubleProperty yellowDuration;
+    private double totalCycleTime;
+    private double yellowDuration;
+    private double greenDuration;
 
-    private double calculatedGreenDuration;
-
-    private final List<SignalGroup> signalGroups = new ArrayList<>();
-    private int currentPhaseIndex = 0;
+    private final List<SignalGroup> groups = new ArrayList<>();
+    private int currentPhase = 0;
     private double phaseTimer = 0;
 
     public SignalisedIntersection(double x, double y, double totalCycleTime, double yellowDuration)
     {
-        this.positionX.set(x);
-        this.positionY.set(y);
-        this.totalCycleTime = new SimpleDoubleProperty(totalCycleTime);
-        this.yellowDuration = new SimpleDoubleProperty(yellowDuration);
+        this.position = new Vec2(x, y);
+        this.totalCycleTime = totalCycleTime;
+        this.yellowDuration = yellowDuration;
 
-        this.totalCycleTime.addListener((obs, oldVal, newVal) -> recalculateDurations());
-        this.yellowDuration.addListener((obs, oldVal, newVal) -> recalculateDurations());
+        recalculateDurations();
     }
 
     public void addSignalGroup()
     {
-        this.signalGroups.add(new SignalGroup());
+        groups.add(new SignalGroup());
         recalculateDurations();
     }
 
-    private void recalculateDurations()
+    public List<SignalGroup> groups()
     {
-        int numPhases = signalGroups.size();
-        if (numPhases == 0)
-        {
-            this.calculatedGreenDuration = 0;
-            return;
-        }
+        return Collections.unmodifiableList(groups);
+    }
 
-        double greenTime = (this.totalCycleTime.get() / numPhases) - this.yellowDuration.get();
-
-        this.calculatedGreenDuration = Math.max(0, greenTime);
-
-        if (greenTime <= 0)
-        {
-            System.err.println("Warning: Calculated green duration is zero or negative. "
-                    + "Total cycle time may be too short or yellow duration too long.");
-        }
+    @Override
+    public Vec2 position()
+    {
+        return position;
     }
 
     @Override
     public void update(double deltaTime)
     {
-        if (signalGroups.isEmpty())
+        if (groups.isEmpty())
         {
-            return; // no roads connected
+            return;
         }
 
         phaseTimer += deltaTime;
 
-        double currentPhaseYellowStartTime = calculatedGreenDuration;
-        double currentPhaseTotalDuration = calculatedGreenDuration;
+        double yellowStart = greenDuration;
+        double phaseLength = greenDuration + yellowDuration;
+        SignalGroup active = groups.get(currentPhase);
 
-        SignalGroup activeGroup = signalGroups.get(currentPhaseIndex);
-
-        if (phaseTimer < currentPhaseYellowStartTime)
+        if (phaseTimer < yellowStart)
         {
-            activeGroup.setState(TrafficLightState.GREEN);
-        } else if (phaseTimer < currentPhaseTotalDuration)
+            active.setState(TrafficLightState.GREEN);
+        } else if (phaseTimer < phaseLength)
         {
-            activeGroup.setState(TrafficLightState.YELLOW);
+            active.setState(TrafficLightState.YELLOW);
         } else
         {
-            activeGroup.setState(TrafficLightState.RED);
-            currentPhaseIndex = (currentPhaseIndex + 1) % signalGroups.size();
-            signalGroups.get(currentPhaseIndex).setState(TrafficLightState.GREEN);
+            active.setState(TrafficLightState.RED);
+
+            currentPhase = (currentPhase + 1) % groups.size();
+            groups.get(currentPhase).setState(TrafficLightState.GREEN);
             phaseTimer = 0;
         }
     }
 
-    public List<SignalGroup> getSignalGroups()
+    private void recalculateDurations()
     {
-        return Collections.unmodifiableList(signalGroups);
+        if (groups.isEmpty())
+        {
+            greenDuration = 0;
+            return;
+        }
+
+        greenDuration = Math.max(0, (totalCycleTime / groups.size()) - yellowDuration);
     }
 
     @Override
-    public double getPositionX()
+    public boolean mayEnter(Road incoming, double tToArrivalSecs)
     {
-        return positionX.get();
-    }
-
-    @Override
-    public DoubleProperty positionXProperty()
-    {
-        return positionX;
-    }
-
-    @Override
-    public double getPositionY()
-    {
-        return positionY.get();
-    }
-
-    @Override
-    public DoubleProperty positionYProperty()
-    {
-        return positionY;
-    }
-
-    public double getTotalCycleTime()
-    {
-        return totalCycleTime.get();
-    }
-
-    public void setTotalCycleTime(double time)
-    {
-        this.totalCycleTime.set(time);
-    }
-
-    public DoubleProperty totalCycleTimeProperty()
-    {
-        return totalCycleTime;
-    }
-
-    public double getYellowDuration()
-    {
-        return yellowDuration.get();
-    }
-
-    public void setYellowDuration(double duration)
-    {
-        this.yellowDuration.set(duration);
-    }
-
-    public DoubleProperty yellowDurationProperty()
-    {
-        return yellowDuration;
+        return !groups.isEmpty() && groups.get(currentPhase).state() == TrafficLightState.GREEN;
     }
 }

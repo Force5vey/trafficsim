@@ -6,6 +6,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import trafficsim.core.model.Intersection;
+import trafficsim.ui.adapter.IntersectionUtil;
 import trafficsim.ui.controller.MainController;
 import trafficsim.ui.controller.MainController.InteractionMode;
 
@@ -27,15 +28,27 @@ public class IntersectionView extends Region
         this.highlight.setCenterX(0);
         this.highlight.setCenterY(0);
 
-        layoutXProperty().bind(model.positionXProperty());
-        layoutYProperty().bind(model.positionYProperty());
+        double px = IntersectionUtil.toPx(model.position().x);
+        double py = IntersectionUtil.toPx(model.position().y);
+
+        setLayoutX(px);
+        setLayoutY(py);
 
         setOnMouseEntered(event ->
         {
-            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            InteractionMode mode = controller.getCurrentMode();
+
+            if (mode == InteractionMode.NORMAL || mode == InteractionMode.PLACING_ROAD)
             {
                 highlight.setVisible(true);
-                getScene().setCursor(Cursor.HAND);
+
+                if (mode == InteractionMode.PLACING_ROAD)
+                {
+                    getScene().setCursor(Cursor.CROSSHAIR);
+                } else
+                {
+                    getScene().setCursor(Cursor.HAND);
+                }
             }
         });
 
@@ -47,11 +60,22 @@ public class IntersectionView extends Region
 
         setOnMouseClicked(event ->
         {
-            if (controller.getCurrentMode() == InteractionMode.NORMAL)
-            {
+            InteractionMode mode = controller.getCurrentMode();
+
+            switch (mode) {
+            case NORMAL:
                 editAction.accept(model);
-                event.consume();
+                break;
+
+            case PLACING_ROAD:
+                controller.onIntersectionPickedForRoad(model);
+                break;
+            default:
+
+                /* ignoring clicks in other modes*/
             }
+            event.consume();
+
         });
     }
 

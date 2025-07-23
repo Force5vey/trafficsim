@@ -1,16 +1,12 @@
 package trafficsim.core.model;
 
-import javafx.beans.property.DoubleProperty;
-
-public interface Intersection
+public interface Intersection extends Updatable
 {
-    void update(double deltaTime);
+    Vec2 position();
 
-    double getPositionX();
-
-    double getPositionY();
-
-    DoubleProperty positionXProperty();
-
-    DoubleProperty positionYProperty();
+    default boolean mayEnter(Road incoming, double tToArrivalSecs)
+    {
+        // default for roundabouts / unsignalised 
+        return true;
+    }
 }

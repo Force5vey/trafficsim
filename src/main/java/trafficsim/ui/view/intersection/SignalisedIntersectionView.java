@@ -4,12 +4,12 @@ import java.util.function.Consumer;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import trafficsim.core.model.Intersection;
+import trafficsim.ui.adapter.IntersectionUtil;
 import trafficsim.ui.controller.MainController;
 
 public class SignalisedIntersectionView extends IntersectionView
 {
-    public SignalisedIntersectionView(Intersection model, Consumer<Intersection> editAction,
-            MainController controller)
+    public SignalisedIntersectionView(Intersection model, Consumer<Intersection> editAction, MainController controller)
     {
         super(model, editAction, controller);
 
@@ -19,5 +19,11 @@ public class SignalisedIntersectionView extends IntersectionView
         lightView.setY(-lightView.getHeight() / 2);
 
         getChildren().addAll(highlight, lightView);
+
+        double px = IntersectionUtil.toPx(model.position().x);
+        double py = IntersectionUtil.toPx(model.position().y);
+
+        setLayoutX(px);
+        setLayoutY(py);
     }
 }

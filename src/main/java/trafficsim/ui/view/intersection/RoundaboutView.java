@@ -4,6 +4,7 @@ import java.util.function.Consumer;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import trafficsim.core.model.Intersection;
+import trafficsim.ui.adapter.IntersectionUtil;
 import trafficsim.ui.controller.MainController;
 
 public class RoundaboutView extends IntersectionView
@@ -18,5 +19,11 @@ public class RoundaboutView extends IntersectionView
         roundaboutShape.setCenterY(0);
 
         getChildren().addAll(highlight, roundaboutShape);
+
+        double px = IntersectionUtil.toPx(model.position().x);
+        double py = IntersectionUtil.toPx(model.position().y);
+
+        setLayoutX(px);
+        setLayoutY(py);
     }
 }
