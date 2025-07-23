@@ -25,6 +25,7 @@
                 <Button fx:id="addIntersectionButton" onAction="#handleAddIntersectionRequest"
                     text="Add Intersection" />
                 <Button fx:id="addRoadButton" onAction="#handleAddRoadRequest" text="Add Road" />
+                <Button fx:id="addCarButton" onAction="#handleAddCarRequest" text="Add Car" />
 
             </children>
         </HBox>

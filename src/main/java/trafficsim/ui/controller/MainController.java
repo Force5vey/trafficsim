@@ -10,6 +10,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Optional;
 import javafx.collections.ListChangeListener;
 import javafx.scene.Cursor;
@@ -47,16 +48,19 @@ public class MainController
     private Button addIntersectionButton;
     @FXML
     private Button addRoadButton;
+    @FXML
+    private Button addCarButton;
 
     private SimulationEngine engine;
     private SimulationRenderer simulationRenderer;
 
     public enum InteractionMode {
-        NORMAL, PLACING_INTERSECTION, PLACING_ROAD
+        NORMAL, PLACING_INTERSECTION, PLACING_ROAD, PLACING_CAR
     }
 
     private InteractionMode currentMode = InteractionMode.NORMAL;
-    private Intersection firstPicked = null;
+    private Intersection firstPicked = null; // for roads
+    private Intersection pickedSpawn = null; // for cars
 
     @FXML
     public void initialize()
@@ -116,6 +120,14 @@ public class MainController
         simulationPane.getScene().setCursor(Cursor.CROSSHAIR);
     }
 
+    @FXML
+    private void handleAddCarRequest()
+    {
+        currentMode = InteractionMode.PLACING_CAR;
+        simulationPane.getScene().setCursor(Cursor.CROSSHAIR);
+        pickedSpawn = null;
+    }
+
     public void onIntersectionPickedForRoad(Intersection picked)
     {
         if (firstPicked == null)
@@ -135,6 +147,26 @@ public class MainController
 
         currentMode = InteractionMode.NORMAL;
         firstPicked = null;
+        simulationPane.getScene().setCursor(Cursor.DEFAULT);
+    }
+
+    public void onIntersectionPickedForCar(Intersection picked)
+    {
+        pickedSpawn = picked;
+        Optional<Car> opt = promptForCarSettings();
+        opt.ifPresent(car ->
+        {
+            List<Road> outs = engine.roadNetwork().outgoing(picked);
+            if (outs.isEmpty())
+            {
+                showWarning("Selected intersection has no outgoing road.");
+                return;
+            }
+            engine.addVehicle(car, outs.get(0), 0.0);
+            simulationRenderer.onCarAdded(car);
+        });
+
+        currentMode = InteractionMode.NORMAL;
         simulationPane.getScene().setCursor(Cursor.DEFAULT);
     }
 
@@ -350,6 +382,81 @@ public class MainController
             return null;
         });
         return dialog.showAndWait();
+    }
+
+    private Optional<Car> promptForCarSettings()
+    {
+        Dialog<Car> dialog = new Dialog<>();
+        dialog.setTitle("New Car");
+        ButtonType createType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(createType, ButtonType.CANCEL);
+
+        GridPane g = new GridPane();
+        g.setHgap(10);
+        g.setVgap(10);
+        g.setPadding(new Insets(20, 150, 10, 10));
+        TextField maxSpd = new TextField("30");
+        TextField accel = new TextField("2");
+        g.add(new Label("Max speed (m/s):"), 0, 0);
+        g.add(maxSpd, 1, 0);
+        g.add(new Label("Acceleration (m/s^2):"), 0, 1);
+        g.add(accel, 1, 1);
+        dialog.getDialogPane().setContent(g);
+
+        dialog.setResultConverter(btn ->
+        {
+            if (btn == createType)
+            {
+                try
+                {
+                    double v = Double.parseDouble(maxSpd.getText());
+                    double a = Double.parseDouble(accel.getText());
+                    return new Car(engine.roadNetwork(), v, a);
+                } catch (NumberFormatException e)
+                {
+                    System.err.println("Bad number");
+                }
+            }
+            return null;
+        });
+        return dialog.showAndWait();
+    }
+
+    public void showEditCarDialog(Car car)
+    {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Edit Car");
+        ButtonType apply = new ButtonType("Apply", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(apply, ButtonType.CANCEL);
+
+        GridPane g = new GridPane();
+        g.setHgap(10);
+        g.setVgap(10);
+        g.setPadding(new Insets(20, 150, 10, 10));
+        TextField maxSpd = new TextField(String.valueOf(car.getMaxSpeed()));
+        TextField accel = new TextField(String.valueOf(car.getAcceleration()));
+        g.add(new Label("Max speed (m/s):"), 0, 0);
+        g.add(maxSpd, 1, 0);
+        g.add(new Label("Acceleration (m/s^2):"), 0, 1);
+        g.add(accel, 1, 1);
+        dialog.getDialogPane().setContent(g);
+
+        dialog.setResultConverter(btn ->
+        {
+            if (btn == apply)
+            {
+                try
+                {
+                    car.setMaxSpeed(Double.parseDouble(maxSpd.getText()));
+                    car.setAcceleration(Double.parseDouble(accel.getText()));
+                } catch (NumberFormatException e)
+                {
+                    System.err.println("Bad number");
+                }
+            }
+            return null;
+        });
+        dialog.showAndWait();
     }
 
     private boolean isFarEnough(double newPxX, double newPxY)

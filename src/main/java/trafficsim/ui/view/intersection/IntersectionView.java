@@ -38,11 +38,12 @@ public class IntersectionView extends Region
         {
             InteractionMode mode = controller.getCurrentMode();
 
-            if (mode == InteractionMode.NORMAL || mode == InteractionMode.PLACING_ROAD)
+            if (mode == InteractionMode.NORMAL || mode == InteractionMode.PLACING_ROAD
+                    || mode == InteractionMode.PLACING_CAR)
             {
                 highlight.setVisible(true);
 
-                if (mode == InteractionMode.PLACING_ROAD)
+                if (mode == InteractionMode.PLACING_ROAD || mode == InteractionMode.PLACING_CAR)
                 {
                     getScene().setCursor(Cursor.CROSSHAIR);
                 } else
@@ -66,12 +67,12 @@ public class IntersectionView extends Region
             case NORMAL:
                 editAction.accept(model);
                 break;
-
             case PLACING_ROAD:
                 controller.onIntersectionPickedForRoad(model);
                 break;
+            case PLACING_CAR:
+                controller.onIntersectionPickedForCar(model);
             default:
-
                 /* ignoring clicks in other modes*/
             }
             event.consume();

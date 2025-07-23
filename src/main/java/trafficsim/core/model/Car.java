@@ -5,7 +5,7 @@ import java.util.Random;
 
 public class Car implements Updatable
 {
-    private final double maxSpeed;
+    private double maxSpeed;
     private double acceleration;
     private final RoadNetwork net;
     private final Random rng = new Random();
@@ -116,5 +116,25 @@ public class Car implements Updatable
     {
         Vec2 a = road.from().position(), b = road.to().position();
         return Math.atan2(b.y - a.y, b.x - a.x);
+    }
+
+    public double getMaxSpeed()
+    {
+        return maxSpeed;
+    }
+
+    public double getAcceleration()
+    {
+        return acceleration;
+    }
+
+    public void setMaxSpeed(double v)
+    {
+        this.maxSpeed = Math.max(0, v);
+    }
+
+    public void setAcceleration(double a)
+    {
+        this.acceleration = Math.max(0, a);
     }
 }
