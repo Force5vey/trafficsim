@@ -45,6 +45,16 @@ public final class SignalisedIntersection implements Intersection
         }
     }
 
+    public void unregisterIncomingRoad(Road road)
+    {
+        SignalGroup groupToRemove = signalMap.remove(road);
+        if (groupToRemove != null)
+        {
+            signalCycle.remove(groupToRemove);
+            recalculateDurations();
+        }
+    }
+
     public Map<Road, SignalGroup> getSignalMap()
     {
         return Collections.unmodifiableMap(signalMap);

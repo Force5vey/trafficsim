@@ -9,7 +9,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.Node;
-
+import javafx.scene.layout.Pane;
 import trafficsim.core.model.Intersection;
 import trafficsim.ui.adapter.IntersectionUtil;
 import trafficsim.ui.controller.MainController;
@@ -74,6 +74,15 @@ public class SignalisedIntersectionView extends IntersectionView
         return signalCircle;
     }
 
+    public void removeSignalForRoad(Road road, Pane parentPane)
+    {
+        Circle signalCircle = signalViews.remove(road);
+        if (signalCircle != null)
+        {
+            parentPane.getChildren().remove(signalCircle);
+        }
+    }
+
     @Override
     public void updateView()
     {
@@ -108,5 +117,14 @@ public class SignalisedIntersectionView extends IntersectionView
             circle.setFill(Color.DARKSLATEGRAY);
             break;
         }
+    }
+
+    public void removeAllSignalViews(Pane parentPane)
+    {
+        for (Circle signalCircle : signalViews.values())
+        {
+            parentPane.getChildren().remove(signalCircle);
+        }
+        signalViews.clear();
     }
 }

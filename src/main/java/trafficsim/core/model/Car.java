@@ -59,11 +59,16 @@ public class Car implements Updatable
             return true;
         }
 
+        if (acceleration < 1e-6)
+        {
+            return v < 1e-6;
+        }
+
         double stopLine = Math.max(0, road.length() - STOP_LINE_OFFSET_METERS);
         double remainingDistanceToStopLine = stopLine - s;
         double requiredStoppingDistance = (v * v) / (2.0 * acceleration);
 
-        return requiredStoppingDistance <= remainingDistanceToStopLine;
+        return remainingDistanceToStopLine <= requiredStoppingDistance;
     }
 
     @Override
@@ -177,8 +182,10 @@ public class Car implements Updatable
             return new Vec2(0, 0);
         }
 
+        Vec2 a = road.from().position();
+        Vec2 b = road.to().position();
+
         double t = s / road.length();
-        Vec2 a = road.from().position(), b = road.to().position();
         return new Vec2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
     }
 

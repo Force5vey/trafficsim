@@ -50,10 +50,17 @@ public final class SimulationEngine
         updatables.add(intersection);
     }
 
-    public void removeIntersection(Intersection intersection)
+    public List<Road> removeIntersection(Intersection intersection)
     {
+        List<Road> roadsToRemove = roadNet.findAllConnectedRoads(intersection);
+        for (Road road : roadsToRemove)
+        {
+            removeRoad(road);
+        }
         updatables.remove(intersection);
-        //TODO: Remove outbound roads
+        roadNet.removeIntersection(intersection);
+
+        return roadsToRemove;
     }
 
     public RoadNetwork roadNetwork()
@@ -70,6 +77,7 @@ public final class SimulationEngine
     public void removeRoad(Road road)
     {
         updatables.remove(road);
+        roadNet.removeRoad(road);
     }
 
     public void addVehicle(Car car, Road spawnRoad, double spawnOffsetMeters)

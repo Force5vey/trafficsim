@@ -30,6 +30,8 @@ import trafficsim.core.model.TrafficLightState;
 import trafficsim.core.sim.SimulationEngine;
 import trafficsim.ui.adapter.IntersectionUtil;
 import trafficsim.ui.view.SimulationRenderer;
+import trafficsim.ui.view.intersection.IntersectionView;
+import trafficsim.ui.view.intersection.SignalisedIntersectionView;
 
 public class MainController
 {
@@ -260,7 +262,25 @@ public class MainController
 
         if (deleteRequested.isPresent() && deleteRequested.get())
         {
-            engine.removeIntersection(intersection);
+            List<Road> removeRoads = engine.removeIntersection(intersection);
+            simulationRenderer.removeIntersection(intersection);
+            for (Road road : removeRoads)
+            {
+                simulationRenderer.removeRoad(road);
+                Intersection neighbor = road.to().equals(intersection) ? road.from() : road.to();
+
+                if (neighbor instanceof SignalisedIntersection)
+                {
+                    SignalisedIntersection sigNeighbor = (SignalisedIntersection) neighbor;
+                    sigNeighbor.unregisterIncomingRoad(road);
+
+                    IntersectionView viewMgr = simulationRenderer.getIntersectionView(neighbor);
+                    if (viewMgr instanceof SignalisedIntersectionView)
+                    {
+                        ((SignalisedIntersectionView) viewMgr).removeSignalForRoad(road, lightPane);
+                    }
+                }
+            }
         }
     }
 

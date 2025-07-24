@@ -66,15 +66,25 @@ public class SimulationRenderer
         lightPane.getChildren().add(viewMgr.getHighlightNode());
     }
 
+    public IntersectionView getIntersectionView(Intersection model)
+    {
+        return intersectionViewMgrs.get(model);
+    }
+
     public void removeIntersection(Intersection intersection)
     {
-        //TODO: update removal from all nodes
+        IntersectionView viewMgr = intersectionViewMgrs.remove(intersection);
+        if (viewMgr != null)
+        {
+            intersectionPane.getChildren().removeAll(viewMgr.getBaseNodes());
 
-        // Node view = intersectionViewMgrs.remove(intersection);
-        // if (view != null)
-        // {
-        //     root.getChildren().remove(view);
-        // }
+            lightPane.getChildren().remove(viewMgr.getHighlightNode());
+
+            if (viewMgr instanceof SignalisedIntersectionView)
+            {
+                ((SignalisedIntersectionView) viewMgr).removeAllSignalViews(lightPane);
+            }
+        }
     }
 
     public void removeRoad(Road road)

@@ -59,7 +59,7 @@
                     </children>
                 </HBox>
                 <!-- added style...might need to checkthe tag-->
-                <Label fx:id="timeLabel" style="-fx-foreground-color: #3e3e3e;">
+                <Label fx:id="timeLabel" style="-fx-foreground-color: #ffffff;">
                     <font>
                         <Font size="18.0" />
                     </font>

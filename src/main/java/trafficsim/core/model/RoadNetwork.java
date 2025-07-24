@@ -20,4 +20,41 @@ public final class RoadNetwork
     {
         return adj.getOrDefault(intersection, List.of());
     }
+
+    public List<Road> findAllConnectedRoads(Intersection intersection)
+    {
+        Set<Road> connected = new HashSet<>();
+
+        connected.addAll(outgoing(intersection));
+
+        for (List<Road> roads : adj.values())
+        {
+            for (Road road : roads)
+            {
+                if (road.to().equals(intersection))
+                {
+                    connected.add(road);
+                }
+            }
+        }
+        return new ArrayList<>(connected);
+    }
+
+    public void removeRoad(Road road)
+    {
+        if (road == null)
+        {
+            return;
+        }
+        List<Road> outgoingRoads = adj.get(road.from());
+        if (outgoingRoads != null)
+        {
+            outgoingRoads.remove(road);
+        }
+    }
+
+    public void removeIntersection(Intersection intersection)
+    {
+        adj.remove(intersection);
+    }
 }
