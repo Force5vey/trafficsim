@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.GridPane?>
@@ -13,32 +14,123 @@
 <?import javafx.scene.paint.Color?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-1.0"
-    minWidth="-1.0" prefHeight="720.0" prefWidth="1280.0"
+<BorderPane
+    maxHeight="-Infinity"
+    maxWidth="-Infinity"
+    minHeight="-1.0"
+    minWidth="-1.0"
+    prefHeight="720.0"
+    prefWidth="1280.0"
     xmlns="http://javafx.com/javafx/11.0.2"
     xmlns:fx="http://javafx.com/fxml/1"
     fx:controller="trafficsim.ui.controller.MainController">
 
-    <top>
-        <HBox alignment="CENTER_LEFT" spacing="10.0"
+    <left>
+        <VBox
+            prefWidth="250.0"
+            spacing="10.0"
+            style="-fx-background-color: #2D2D2D;"
             BorderPane.alignment="CENTER">
             <padding>
-                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                <Insets
+                    bottom="10.0"
+                    left="10.0"
+                    right="10.0"
+                    top="10.0" />
             </padding>
             <children>
-                <Button fx:id="addIntersectionButton"
-                    onAction="#handleAddIntersectionRequest" text="Add Intersection" />
-                <Button fx:id="addRoadButton" onAction="#handleAddRoadRequest"
+                <Label
+                    fx:id="timeLabel"
+                    alignment="CENTER"
+                    maxWidth="1.7976931348623157E308"
+                    text="Time: 0s">
+                    <font>
+                        <Font size="18.0" />
+                    </font>
+                </Label>
+                <Separator prefWidth="200.0" />
+                <HBox alignment="CENTER" spacing="5.0">
+                    <children>
+                        <Button
+                            fx:id="startButton"
+                            maxWidth="1.7976931348623157E308"
+                            mnemonicParsing="false"
+                            onAction="#handleStart"
+                            text="Start"
+                            HBox.hgrow="ALWAYS" />
+                        <Button
+                            fx:id="pauseButton"
+                            maxWidth="1.7976931348623157E308"
+                            mnemonicParsing="false"
+                            onAction="#handlePause"
+                            text="Pause"
+                            HBox.hgrow="ALWAYS" />
+                        <Button
+                            fx:id="stopButton"
+                            maxWidth="1.7976931348623157E308"
+                            mnemonicParsing="false"
+                            onAction="#handleStop"
+                            text="Stop"
+                            HBox.hgrow="ALWAYS" />
+                    </children>
+                </HBox>
+                <Separator prefWidth="200.0" />
+                <Button
+                    fx:id="addIntersectionButton"
+                    maxWidth="1.7976931348623157E308"
+                    onAction="#handleAddIntersectionRequest"
+                    text="Add Intersection" />
+                <Button
+                    fx:id="addRoadButton"
+                    maxWidth="1.7976931348623157E308"
+                    onAction="#handleAddRoadRequest"
                     text="Add Road" />
-                <Button fx:id="addCarButton" onAction="#handleAddCarRequest"
+                <Button
+                    fx:id="addCarButton"
+                    maxWidth="1.7976931348623157E308"
+                    onAction="#handleAddCarRequest"
                     text="Add Car" />
+                <TitledPane
+                    fx:id="propertiesPane"
+                    collapsible="false"
+                    prefWidth="250.0"
+                    text="Properties"
+                    VBox.vgrow="ALWAYS">
+                    <content>
+                        <VBox spacing="10.0">
+                            <padding>
+                                <Insets
+                                    top="10.0"
+                                    right="10.0"
+                                    bottom="10.0"
+                                    left="10.0" />
+                            </padding>
+                            <children>
+                                <GridPane
+                                    fx:id="propertiesGrid"
+                                    hgap="10.0"
+                                    vgap="5.0" />
+                                <Label fx:id="validationLabel" wrapText="true">
+                                    <textFill>
+                                        <Color
+                                            red="1.0"
+                                            green="0.2"
+                                            blue="0.2" />
+                                    </textFill>
+                                </Label>
+                            </children>
+                        </VBox>
+                    </content>
+                </TitledPane>
             </children>
-        </HBox>
-    </top>
+        </VBox>
+    </left>
 
     <center>
-        <StackPane fx:id="simulationStackPane"
-            style="-fx-background-color: #3e3e3e;" BorderPane.alignment="CENTER">
+        <StackPane
+            fx:id="simulationStackPane"
+            style="-fx-background-color: #3e3e3e;"
+            BorderPane.alignment="CENTER">
             <children>
                 <Pane fx:id="intersectionPane" />
                 <Pane fx:id="roadPane" />
@@ -47,52 +139,4 @@
             </children>
         </StackPane>
     </center>
-
-    <right>
-        <TitledPane fx:id="propertiesPane" text="Properties"
-            collapsible="false" prefWidth="250.0">
-            <content>
-                <VBox spacing="10.0">
-                    <padding>
-                        <Insets top="10.0" right="10.0" bottom="10.0"
-                            left="10.0" />
-                    </padding>
-                    <children>
-                        <GridPane fx:id="propertiesGrid" hgap="10.0" vgap="5.0" />
-                        <Label fx:id="validationLabel" wrapText="true">
-                            <textFill>
-                                <Color red="1.0" green="0.2" blue="0.2" />
-                            </textFill>
-                        </Label>
-                    </children>
-                </VBox>
-            </content>
-        </TitledPane>
-    </right>
-
-    <bottom>
-        <VBox alignment="CENTER" prefHeight="100.0" spacing="10.0"
-            BorderPane.alignment="CENTER">
-            <children>
-                <HBox alignment="CENTER" spacing="10.0">
-                    <children>
-                        <Button fx:id="startButton" mnemonicParsing="false"
-                            onAction="#handleStart" text="Start" />
-                        <Button fx:id="pauseButton" mnemonicParsing="false"
-                            onAction="#handlePause" text="Pause" />
-                        <Button fx:id="stopButton" mnemonicParsing="false"
-                            onAction="#handleStop" text="Stop" />
-                    </children>
-                </HBox>
-                <Label fx:id="timeLabel" text="Time: 0s">
-                    <font>
-                        <Font size="18.0" />
-                    </font>
-                </Label>
-            </children>
-            <padding>
-                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-            </padding>
-        </VBox>
-    </bottom>
 </BorderPane>

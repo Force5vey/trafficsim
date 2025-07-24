@@ -17,17 +17,6 @@ public class MainApplication extends Application
     @Override
     public void start(Stage stage) throws IOException
     {
-        // Parent root = loadFXML("primary");
-
-        // scene = new Scene(loadFXML("primary"), 800, 600);
-
-        // JMetro jMetro = new JMetro(Style.DARK);
-        // jMetro.setScene(scene);
-
-        // stage.setTitle("Traffic Sim");
-        // stage.setScene(scene);
-        // stage.show();
-
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("/trafficsim/view/MainView.fxml"));
 
         Parent root = fxmlLoader.load();
