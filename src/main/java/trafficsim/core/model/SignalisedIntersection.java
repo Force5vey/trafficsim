@@ -110,24 +110,14 @@ public final class SignalisedIntersection implements Intersection
     }
 
     @Override
-    public boolean mayEnter(Road incoming, double tToArrivalSecs)
+    public TrafficLightState getSignalStateFor(Road incoming)
     {
         SignalGroup group = signalMap.get(incoming);
         if (group == null)
         {
-            return false;
+            return TrafficLightState.RED;
         }
-        return group.state() == TrafficLightState.GREEN;
+        return group.state();
     }
 
-    // public List<SignalGroup> groups()
-    // {
-    //     return Collections.unmodifiableList(groups);
-    // }
-
-    // public void addSignalGroup()
-    // {
-    //     groups.add(new SignalGroup());
-    //     recalculateDurations();
-    // }
 }

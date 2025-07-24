@@ -329,7 +329,7 @@ public class MainController
             if ("Traffic Light".equals(newVal))
             {
                 param1Label.setText("Total Cycle (s):");
-                param1Field.setText("40");
+                param1Field.setText("20");
                 param2Label.setText("Yellow (s):");
                 param2Field.setText("3");
                 param2Label.setVisible(true);
@@ -337,7 +337,7 @@ public class MainController
             } else if ("Roundabout".equals(newVal))
             {
                 param1Label.setText("Speed (px/s):");
-                param1Field.setText("25");
+                param1Field.setText("15");
                 param2Label.setVisible(false);
                 param2Field.setVisible(false);
             }

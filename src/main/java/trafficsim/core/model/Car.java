@@ -2,9 +2,12 @@ package trafficsim.core.model;
 
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class Car implements Updatable
 {
+    private static final double STOP_LINE_OFFSET_METERS = 7.0;
+
     private double maxSpeed;
     private double acceleration;
     private final RoadNetwork net;
@@ -37,6 +40,32 @@ public class Car implements Updatable
         this.s = Math.max(0.0, Math.min(offsetMeters, road.length()));
     }
 
+    private boolean shouldStopForLight()
+    {
+        if (road == null)
+        {
+            return true;
+        }
+        Intersection dest = road.to();
+        TrafficLightState lightState = dest.getSignalStateFor(road);
+
+        if (lightState == TrafficLightState.GREEN)
+        {
+            return false;
+        }
+
+        if (lightState == TrafficLightState.RED)
+        {
+            return true;
+        }
+
+        double stopLine = Math.max(0, road.length() - STOP_LINE_OFFSET_METERS);
+        double remainingDistanceToStopLine = stopLine - s;
+        double requiredStoppingDistance = (v * v) / (2.0 * acceleration);
+
+        return requiredStoppingDistance <= remainingDistanceToStopLine;
+    }
+
     @Override
     public void update(double deltaTime)
     {
@@ -58,55 +87,96 @@ public class Car implements Updatable
             v = Math.max(v - acceleration * deltaTime, targetV);
         }
 
-        double ds = v * deltaTime;
-        while (s + ds >= road.length())
+        double potentialNewS = s + v * deltaTime;
+        boolean stopIsRequired = shouldStopForLight();
+
+        if (stopIsRequired)
         {
-            ds -= (road.length() - s);
-            enterNextRoad();
-            if (road == null)
+            double stopLine = Math.max(0, road.length() - STOP_LINE_OFFSET_METERS);
+            if (potentialNewS >= stopLine)
             {
-                v = 0.0;
-                return;
+                s = stopLine;
+                v = 0;
+            } else
+            {
+                s = potentialNewS;
+            }
+        } else
+        {
+            if (potentialNewS >= road.length())
+            {
+                double overflowDistance = potentialNewS - road.length();
+                enterNextRoad();
+                if (road != null)
+                {
+                    s = overflowDistance;
+                    v = Math.min(v, road.speedLimit());
+                } else
+                {
+                    s = 0;
+                    v = 0;
+                }
+            } else
+            {
+                s = potentialNewS;
             }
         }
-        s += ds;
     }
 
     private void decideTargetSpeed()
     {
-        double remaining = road.length() - s;
-        double timeToNode = remaining / Math.max(v, 0.1);
-        Intersection dest = road.to();
-
-        boolean canGo = dest.mayEnter(road, timeToNode);
-
-        if (!canGo)
+        if (shouldStopForLight())
         {
-            double stopDist = v * v / (2.0 * acceleration);
-            if (stopDist >= remaining - 1.0)
-            {
-                targetV = 0.0;
-                return;
-            }
+            double stopLine = Math.max(0, road.length() - STOP_LINE_OFFSET_METERS);
+            double remaining = stopLine - s;
+            double safeSpeed = Math.sqrt(2.0 * acceleration * Math.max(0, remaining));
+            targetV = Math.min(safeSpeed, road.speedLimit());
+        } else
+        {
+            targetV = Math.min(maxSpeed, road.speedLimit());
         }
-        targetV = Math.min(maxSpeed, road.speedLimit());
     }
 
     private void enterNextRoad()
     {
         Intersection node = road.to();
-        List<Road> outs = net.outgoing(node);
-        if (outs.isEmpty())
+        Intersection prevNode = road.from();
+        List<Road> allOutgoing = net.outgoing(node);
+
+        if (allOutgoing.isEmpty())
         {
             road = null;
             return;
         }
-        road = outs.get(rng.nextInt(outs.size()));
+
+        List<Road> validChoices;
+        if (node instanceof SignalisedIntersection)
+        {
+            validChoices = allOutgoing.stream().filter(r -> r.to() != prevNode).collect(Collectors.toList());
+        } else
+        {
+            // roundabouts
+            validChoices = allOutgoing;
+        }
+
+        if (validChoices.isEmpty())
+        {
+            // dead end road
+            road = null;
+            return;
+        }
+
+        road = validChoices.get(rng.nextInt(validChoices.size()));
         s = 0.0;
     }
 
     public Vec2 worldPos()
     {
+        if (road == null)
+        {
+            return new Vec2(0, 0);
+        }
+
         double t = s / road.length();
         Vec2 a = road.from().position(), b = road.to().position();
         return new Vec2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
@@ -114,6 +184,11 @@ public class Car implements Updatable
 
     public double headingRad()
     {
+        if (road == null)
+        {
+            return 0.0;
+        }
+
         Vec2 a = road.from().position(), b = road.to().position();
         return Math.atan2(b.y - a.y, b.x - a.x);
     }

@@ -4,9 +4,8 @@ public interface Intersection extends Updatable
 {
     Vec2 position();
 
-    default boolean mayEnter(Road incoming, double tToArrivalSecs)
+    default TrafficLightState getSignalStateFor(Road incoming)
     {
-        // default for roundabouts / unsignalised 
-        return true;
+        return TrafficLightState.GREEN;
     }
 }
