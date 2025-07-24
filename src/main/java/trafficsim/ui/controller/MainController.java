@@ -78,6 +78,11 @@ public class MainController
         this.engine = new SimulationEngine();
         this.simulationRenderer = new SimulationRenderer(intersectionPane, roadPane, carPane, lightPane, engine, this);
 
+        intersectionPane.setPickOnBounds(false);
+        roadPane.setPickOnBounds(false);
+        carPane.setPickOnBounds(false);
+        lightPane.setPickOnBounds(false);
+
         simulationStackPane.setOnMouseClicked(this::handlePaneClick);
     }
 
@@ -93,29 +98,27 @@ public class MainController
             return;
         }
 
-        if (currentMode != InteractionMode.PLACING_INTERSECTION)
+        if (currentMode == InteractionMode.PLACING_INTERSECTION)
         {
-            return;
+            double xWorld = event.getX() / IntersectionUtil.PX_PER_M;
+            double yWorld = event.getY() / IntersectionUtil.PX_PER_M;
+
+            if (!isFarEnough(event.getX(), event.getY()))
+            {
+                showWarning("Too close to another intersection (min " + MIN_PLACEMENT_DISTANCE + " px).");
+                return;
+            }
+
+            Optional<Intersection> opt = promptForIntersectionSettings(xWorld, yWorld);
+            opt.ifPresent(i ->
+            {
+                engine.addIntersection(i);
+                simulationRenderer.onIntersectionAdded(i);
+            });
+
+            currentMode = InteractionMode.NORMAL;
+            simulationStackPane.getScene().setCursor(Cursor.DEFAULT);
         }
-
-        double xWorld = event.getX() / IntersectionUtil.PX_PER_M;
-        double yWorld = event.getY() / IntersectionUtil.PX_PER_M;
-
-        if (!isFarEnough(event.getX(), event.getY()))
-        {
-            showWarning("Too close to another intersection (min " + MIN_PLACEMENT_DISTANCE + " px).");
-            return;
-        }
-
-        Optional<Intersection> opt = promptForIntersectionSettings(xWorld, yWorld);
-        opt.ifPresent(i ->
-        {
-            engine.addIntersection(i);
-            simulationRenderer.onIntersectionAdded(i);
-        });
-
-        currentMode = InteractionMode.NORMAL;
-        simulationStackPane.getScene().setCursor(Cursor.DEFAULT);
     }
 
     @FXML

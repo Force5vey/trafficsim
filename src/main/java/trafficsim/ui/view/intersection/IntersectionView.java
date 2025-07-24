@@ -30,6 +30,8 @@ public abstract class IntersectionView
         this.highlight.setStrokeWidth(2);
         this.highlight.setVisible(false);
 
+        this.highlight.setMouseTransparent(true);
+
         this.highlight.setCenterX(model.position().x * 10.0);
         this.highlight.setCenterY(model.position().y * 10.0);
     }
