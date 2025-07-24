@@ -1,5 +1,8 @@
 package trafficsim.ui.view.intersection;
 
+import javafx.scene.Node;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import javafx.scene.Cursor;
 import javafx.scene.layout.Region;
@@ -10,10 +13,11 @@ import trafficsim.ui.adapter.IntersectionUtil;
 import trafficsim.ui.controller.MainController;
 import trafficsim.ui.controller.MainController.InteractionMode;
 
-public class IntersectionView extends Region
+public abstract class IntersectionView
 {
     protected Intersection model;
     protected Circle highlight;
+    protected final List<Node> baseNodes = new ArrayList<>();
 
     private static final double HIGHLIGHT_RADIUS = 40;
 
@@ -25,44 +29,43 @@ public class IntersectionView extends Region
         this.highlight.setStroke(Color.LIMEGREEN);
         this.highlight.setStrokeWidth(2);
         this.highlight.setVisible(false);
-        this.highlight.setCenterX(0);
-        this.highlight.setCenterY(0);
 
-        double px = IntersectionUtil.toPx(model.position().x);
-        double py = IntersectionUtil.toPx(model.position().y);
+        this.highlight.setCenterX(model.position().x * 10.0);
+        this.highlight.setCenterY(model.position().y * 10.0);
+    }
 
-        setLayoutX(px);
-        setLayoutY(py);
+    public List<Node> getBaseNodes()
+    {
+        return baseNodes;
+    }
 
-        setOnMouseEntered(event ->
+    public Circle getHighlightNode()
+    {
+        return highlight;
+    }
+
+    protected void attachMouseHandlers(Node node, Consumer<Intersection> editAction, MainController controller)
+    {
+        node.setOnMouseEntered(event ->
         {
             InteractionMode mode = controller.getCurrentMode();
-
             if (mode == InteractionMode.NORMAL || mode == InteractionMode.PLACING_ROAD
                     || mode == InteractionMode.PLACING_CAR)
             {
                 highlight.setVisible(true);
-
-                if (mode == InteractionMode.PLACING_ROAD || mode == InteractionMode.PLACING_CAR)
-                {
-                    getScene().setCursor(Cursor.CROSSHAIR);
-                } else
-                {
-                    getScene().setCursor(Cursor.HAND);
-                }
+                node.getScene().setCursor(mode == InteractionMode.NORMAL ? Cursor.HAND : Cursor.CROSSHAIR);
             }
         });
 
-        setOnMouseExited(event ->
+        node.setOnMouseExited(event ->
         {
             highlight.setVisible(false);
-            getScene().setCursor(Cursor.DEFAULT);
+            node.getScene().setCursor(Cursor.DEFAULT);
         });
 
-        setOnMouseClicked(event ->
+        node.setOnMouseClicked(event ->
         {
             InteractionMode mode = controller.getCurrentMode();
-
             switch (mode) {
             case NORMAL:
                 editAction.accept(model);
@@ -72,11 +75,11 @@ public class IntersectionView extends Region
                 break;
             case PLACING_CAR:
                 controller.onIntersectionPickedForCar(model);
+                break;
             default:
-                /* ignoring clicks in other modes*/
+                //ignoring
             }
             event.consume();
-
         });
     }
 
@@ -84,5 +87,7 @@ public class IntersectionView extends Region
     {
         return model;
     }
+
+    public abstract void updateView();
 
 }

@@ -5,6 +5,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
@@ -35,7 +36,16 @@ public class MainController
     private static final double MIN_PLACEMENT_DISTANCE = 50.0;
 
     @FXML
-    private Pane simulationPane;
+    private Pane simulationStackPane;
+    @FXML
+    private Pane intersectionPane;
+    @FXML
+    private Pane roadPane;
+    @FXML
+    private Pane carPane;
+    @FXML
+    private Pane lightPane;
+
     @FXML
     private Button startButton;
     @FXML
@@ -66,11 +76,9 @@ public class MainController
     public void initialize()
     {
         this.engine = new SimulationEngine();
-        this.simulationRenderer = new SimulationRenderer(simulationPane, engine, this);
+        this.simulationRenderer = new SimulationRenderer(intersectionPane, roadPane, carPane, lightPane, engine, this);
 
-        // timeLabel.textProperty().bind(engine.simulationTimeProperty().asString("Time: %d s"));
-
-        simulationPane.setOnMouseClicked(this::handlePaneClick);
+        simulationStackPane.setOnMouseClicked(this::handlePaneClick);
     }
 
     public InteractionMode getCurrentMode()
@@ -80,6 +88,11 @@ public class MainController
 
     private void handlePaneClick(MouseEvent event)
     {
+        if (event.getTarget() != simulationStackPane)
+        {
+            return;
+        }
+
         if (currentMode != InteractionMode.PLACING_INTERSECTION)
         {
             return;
@@ -102,14 +115,14 @@ public class MainController
         });
 
         currentMode = InteractionMode.NORMAL;
-        simulationPane.getScene().setCursor(Cursor.DEFAULT);
+        simulationStackPane.getScene().setCursor(Cursor.DEFAULT);
     }
 
     @FXML
     private void handleAddIntersectionRequest()
     {
         currentMode = InteractionMode.PLACING_INTERSECTION;
-        simulationPane.getScene().setCursor(javafx.scene.Cursor.CROSSHAIR);
+        lightPane.getScene().setCursor(javafx.scene.Cursor.CROSSHAIR);
     }
 
     @FXML
@@ -117,15 +130,15 @@ public class MainController
     {
         currentMode = InteractionMode.PLACING_ROAD;
         firstPicked = null;
-        simulationPane.getScene().setCursor(Cursor.CROSSHAIR);
+        lightPane.getScene().setCursor(Cursor.CROSSHAIR);
     }
 
     @FXML
     private void handleAddCarRequest()
     {
         currentMode = InteractionMode.PLACING_CAR;
-        simulationPane.getScene().setCursor(Cursor.CROSSHAIR);
         pickedSpawn = null;
+        lightPane.getScene().setCursor(Cursor.CROSSHAIR);
     }
 
     public void onIntersectionPickedForRoad(Intersection picked)
@@ -143,11 +156,15 @@ public class MainController
         {
             engine.addRoad(r);
             simulationRenderer.onRoadAdded(r);
+
+            Road reverseRoad = new Road(secondPicked, firstPicked, r.length(), r.speedLimit());
+            engine.addRoad(reverseRoad);
+            simulationRenderer.onRoadAdded(reverseRoad);
         });
 
         currentMode = InteractionMode.NORMAL;
         firstPicked = null;
-        simulationPane.getScene().setCursor(Cursor.DEFAULT);
+        lightPane.getScene().setCursor(Cursor.DEFAULT);
     }
 
     public void onIntersectionPickedForCar(Intersection picked)
@@ -167,7 +184,7 @@ public class MainController
         });
 
         currentMode = InteractionMode.NORMAL;
-        simulationPane.getScene().setCursor(Cursor.DEFAULT);
+        lightPane.getScene().setCursor(Cursor.DEFAULT);
     }
 
     public void showEditIntersectionDialog(Intersection intersection)
@@ -337,8 +354,8 @@ public class MainController
                     {
                         double totalTime = Double.parseDouble(param1Field.getText());
                         double yellow = Double.parseDouble(param2Field.getText());
-                        SignalisedIntersection intersection = new SignalisedIntersection(x, y, totalTime, yellow);
-                        return intersection;
+                        // SignalisedIntersection intersection = new SignalisedIntersection(x, y, totalTime, yellow);
+                        return new SignalisedIntersection(x, y, totalTime, yellow);
                     } else if ("Roundabout".equals(type))
                     {
                         double speed = Double.parseDouble(param1Field.getText());

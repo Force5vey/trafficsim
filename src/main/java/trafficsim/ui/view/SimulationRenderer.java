@@ -20,18 +20,30 @@ import java.util.function.Consumer;
 
 public class SimulationRenderer
 {
-    private final Pane root;
+    private final Pane intersectionPane;
+    private final Pane roadPane;
+    private final Pane carPane;
+    private final Pane lightPane;
+
     private final SimulationEngine engine;
     private final MainController controller;
 
     private final Map<Car, Rectangle> carViews = new HashMap<>();
     private final Map<Car, CarAdapter> carAdapters = new HashMap<>();
-    private final Map<Intersection, Node> intersectionViews = new HashMap<>();
+
+    private final Map<Intersection, IntersectionView> intersectionViewMgrs = new HashMap<>();
     private final Map<Road, Line> roadViews = new HashMap<>();
 
-    public SimulationRenderer(Pane root, SimulationEngine engine, MainController controller)
+    private static final double ROAD_ENDPOINT_OFFSET_PX = 25.0;
+
+    public SimulationRenderer(Pane intersectionPane, Pane roadPane, Pane carPane, Pane lightPane,
+            SimulationEngine engine, MainController controller)
     {
-        this.root = root;
+        this.intersectionPane = intersectionPane;
+        this.roadPane = roadPane;
+        this.carPane = carPane;
+        this.lightPane = lightPane;
+
         this.engine = engine;
         this.controller = controller;
 
@@ -46,26 +58,31 @@ public class SimulationRenderer
 
     public void onIntersectionAdded(Intersection intersection)
     {
-        Node view = buildView(intersection);
-        intersectionViews.put(intersection, view);
-        root.getChildren().add(view);
+        IntersectionView viewMgr = buildViewManager(intersection);
+        intersectionViewMgrs.put(intersection, viewMgr);
+
+        intersectionPane.getChildren().addAll(viewMgr.getBaseNodes());
+
+        lightPane.getChildren().add(viewMgr.getHighlightNode());
     }
 
     public void removeIntersection(Intersection intersection)
     {
-        Node view = intersectionViews.remove(intersection);
-        if (view != null)
-        {
-            root.getChildren().remove(view);
-        }
+        //TODO: update removal from all nodes
+
+        // Node view = intersectionViewMgrs.remove(intersection);
+        // if (view != null)
+        // {
+        //     root.getChildren().remove(view);
+        // }
     }
 
     public void removeRoad(Road road)
     {
-        Node view = roadViews.remove(road);
+        Line view = roadViews.remove(road);
         if (view != null)
         {
-            root.getChildren().remove(view);
+            roadPane.getChildren().remove(view);
         }
     }
 
@@ -73,7 +90,19 @@ public class SimulationRenderer
     {
         Line line = buildRoadView(road);
         roadViews.put(road, line);
-        root.getChildren().add(1, line);
+        roadPane.getChildren().add(line);
+
+        Intersection destination = road.to();
+        if (destination instanceof SignalisedIntersection)
+        {
+            IntersectionView viewMgr = intersectionViewMgrs.get(destination);
+            if (viewMgr instanceof SignalisedIntersectionView)
+            {
+                Node signalNode = ((SignalisedIntersectionView) viewMgr).createSignalForRoad(road,
+                        controller::showEditIntersectionDialog, controller);
+                lightPane.getChildren().add(signalNode);
+            }
+        }
     }
 
     public void onCarAdded(Car car)
@@ -81,7 +110,7 @@ public class SimulationRenderer
         Rectangle view = buildCarView(car);
         carViews.put(car, view);
         carAdapters.put(car, new CarAdapter(car));
-        root.getChildren().add(view);
+        carPane.getChildren().add(view);
     }
 
     private void refreshFrame()
@@ -95,9 +124,12 @@ public class SimulationRenderer
             view.setX(adapter.xProperty().get());
             view.setY(adapter.yProperty().get());
         }
-    }
 
-    //--------------------------------------------------------------
+        for (IntersectionView viewMgr : intersectionViewMgrs.values())
+        {
+            viewMgr.updateView();
+        }
+    }
 
     private Rectangle buildCarView(Car car)
     {
@@ -106,7 +138,7 @@ public class SimulationRenderer
         return r;
     }
 
-    private Node buildView(Intersection intersection)
+    private IntersectionView buildViewManager(Intersection intersection)
     {
         Consumer<Intersection> editCallback = controller::showEditIntersectionDialog;
         if (intersection instanceof SignalisedIntersection)
@@ -114,6 +146,7 @@ public class SimulationRenderer
             return new SignalisedIntersectionView(intersection, editCallback, controller);
         } else if (intersection instanceof Roundabout)
         {
+            // TODO: Roundabout needs to beupdated to layered pane rnderer
             return new RoundaboutView(intersection, editCallback, controller);
         } else
         {
@@ -128,19 +161,40 @@ public class SimulationRenderer
         double toX = IntersectionUtil.toPx(road.to().position().x);
         double toY = IntersectionUtil.toPx(road.to().position().y);
 
-        Line line = new Line(fromX, fromY, toX, toY);
+        double dx = toX - fromX;
+        double dy = toY - fromY;
+        double length = Math.hypot(dx, dy);
+
+        Line line = new Line();
+
+        if (length > 1e-6)
+        {
+            double ux = dx / length;
+            double uy = dy / length;
+
+            double startX = fromX + ROAD_ENDPOINT_OFFSET_PX * ux;
+            double startY = fromY + ROAD_ENDPOINT_OFFSET_PX * uy;
+            double endX = toX - ROAD_ENDPOINT_OFFSET_PX * ux;
+            double endY = toY - ROAD_ENDPOINT_OFFSET_PX * uy;
+
+            line.setStartX(startX);
+            line.setStartY(startY);
+            line.setEndX(endX);
+            line.setEndY(endY);
+        }
+
         line.setStrokeWidth(12);
         line.setStroke(Color.DIMGRAY);
 
         line.setOnMouseEntered(e ->
         {
             line.setStroke(Color.ORANGE);
-            root.getScene().setCursor(Cursor.HAND);
+            roadPane.getScene().setCursor(Cursor.HAND);
         });
         line.setOnMouseExited(e ->
         {
             line.setStroke(Color.DIMGRAY);
-            root.getScene().setCursor(Cursor.DEFAULT);
+            roadPane.getScene().setCursor(Cursor.DEFAULT);
         });
         line.setOnMouseClicked(e -> controller.showEditRoadDialog(road));
 
@@ -149,6 +203,6 @@ public class SimulationRenderer
 
     public Collection<Intersection> getIntersections()
     {
-        return Collections.unmodifiableSet(intersectionViews.keySet());
+        return Collections.unmodifiableSet(intersectionViewMgrs.keySet());
     }
 }

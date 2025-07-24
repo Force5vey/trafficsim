@@ -6,13 +6,18 @@ public final class RoadNetwork
 {
     private final Map<Intersection, List<Road>> adj = new HashMap<>();
 
-    public void add(Road r)
+    public void add(Road road)
     {
-        adj.computeIfAbsent(r.from(), k -> new ArrayList<>()).add(r);
+        adj.computeIfAbsent(road.from(), k -> new ArrayList<>()).add(road);
+
+        if (road.to() instanceof SignalisedIntersection)
+        {
+            ((SignalisedIntersection) road.to()).registerIncomingRoad(road);
+        }
     }
 
-    public List<Road> outgoing(Intersection i)
+    public List<Road> outgoing(Intersection intersection)
     {
-        return adj.getOrDefault(i, List.of());
+        return adj.getOrDefault(intersection, List.of());
     }
 }

@@ -13,17 +13,21 @@ public class RoundaboutView extends IntersectionView
     {
         super(model, editAction, controller);
 
+        double px = model.position().x * 10.0;
+        double py = model.position().y * 10.0;
+
         Circle roundaboutShape = new Circle(30, Color.DARKGRAY);
         roundaboutShape.setStroke(Color.WHITE);
-        roundaboutShape.setCenterX(0);
-        roundaboutShape.setCenterY(0);
+        roundaboutShape.setCenterX(px);
+        roundaboutShape.setCenterY(py);
 
-        getChildren().addAll(highlight, roundaboutShape);
+        baseNodes.add(roundaboutShape);
+        attachMouseHandlers(roundaboutShape, editAction, controller);
+    }
 
-        double px = IntersectionUtil.toPx(model.position().x);
-        double py = IntersectionUtil.toPx(model.position().y);
+    @Override
+    public void updateView()
+    {
 
-        setLayoutX(px);
-        setLayoutY(py);
     }
 }
