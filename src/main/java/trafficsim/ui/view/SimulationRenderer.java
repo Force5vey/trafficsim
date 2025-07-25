@@ -13,6 +13,7 @@ import trafficsim.core.model.*;
 import trafficsim.core.sim.SimulationEngine;
 import trafficsim.ui.adapter.*;
 import trafficsim.ui.controller.MainController;
+import trafficsim.ui.controller.MainController.InteractionMode;
 import trafficsim.ui.view.intersection.*;
 
 import java.util.*;
@@ -198,13 +199,19 @@ public class SimulationRenderer
 
         line.setOnMouseEntered(e ->
         {
-            line.setStroke(Color.ORANGE);
-            roadPane.getScene().setCursor(Cursor.HAND);
+            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            {
+                line.setStroke(Color.ORANGE);
+                roadPane.getScene().setCursor(Cursor.HAND);
+            }
         });
         line.setOnMouseExited(e ->
         {
             line.setStroke(Color.DIMGRAY);
-            roadPane.getScene().setCursor(Cursor.DEFAULT);
+            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            {
+                roadPane.getScene().setCursor(Cursor.DEFAULT);
+            }
         });
         line.setOnMouseClicked(e -> controller.showEditRoadDialog(road));
 

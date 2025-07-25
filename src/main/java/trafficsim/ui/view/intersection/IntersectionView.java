@@ -62,7 +62,10 @@ public abstract class IntersectionView
         node.setOnMouseExited(event ->
         {
             highlight.setVisible(false);
-            node.getScene().setCursor(Cursor.DEFAULT);
+            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            {
+                node.getScene().setCursor(Cursor.DEFAULT);
+            }
         });
 
         node.setOnMouseClicked(event ->
