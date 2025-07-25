@@ -96,8 +96,8 @@ public final class SimulationEngine
         }
     }
 
-    public Long simulationTimeSeconds()
+    public double simulationTimeSeconds()
     {
-        return simTimeMillis.get() / 1000;
+        return simTimeMillis.get() / 1000.0;
     }
 }

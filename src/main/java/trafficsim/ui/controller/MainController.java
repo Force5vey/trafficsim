@@ -3,6 +3,7 @@ package trafficsim.ui.controller;
 import java.util.List;
 import java.util.Optional;
 
+import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
@@ -21,6 +22,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 
+import trafficsim.ui.adapter.UnitConverter;
 import trafficsim.core.model.Car;
 import trafficsim.core.model.Intersection;
 import trafficsim.core.model.Road;
@@ -87,6 +89,8 @@ public class MainController
     private Label carMaxSpeedLabel, carAccelLabel;
     private TextField carMaxSpeedField, carAccelField;
 
+    private Label propertiesPlaceholderLabel;
+
     @FXML
     public void initialize()
     {
@@ -101,7 +105,20 @@ public class MainController
         simulationStackPane.setOnMouseClicked(this::handlePaneClick);
 
         createPropertyControls();
-        propertiesPane.setVisible(false);
+        propertiesPlaceholderLabel = new Label("Select an 'Add' action above to configure properties.");
+        propertiesPlaceholderLabel.setWrapText(true);
+        propertiesGrid.add(propertiesPlaceholderLabel, 0, 0, 2, 1); // Span 2 columns
+        propertiesPane.setVisible(true);
+
+        AnimationTimer timer = new AnimationTimer() {
+            @Override
+            public void handle(long now)
+            {
+                double time = engine.simulationTimeSeconds();
+                timeLabel.setText(String.format("Time: %.1fs", time));
+            }
+        };
+        timer.start();
     }
 
     public InteractionMode getCurrentMode()
@@ -188,12 +205,12 @@ public class MainController
             addIntersectionButton.setText("Done");
             addRoadButton.setDisable(true);
             addCarButton.setDisable(true);
-            propertiesGrid.add(new Label("Type:"), 0, 0);
-            propertiesGrid.add(intersectionTypeCombo, 1, 0);
-            propertiesGrid.add(param1Label, 0, 1);
-            propertiesGrid.add(param1Field, 1, 1);
-            propertiesGrid.add(param2Label, 0, 2);
-            propertiesGrid.add(param2Field, 1, 2);
+            propertiesGrid.add(new Label("Type:"), 0, 0, 2, 1);
+            propertiesGrid.add(intersectionTypeCombo, 0, 1, 2, 1);
+            propertiesGrid.add(param1Label, 0, 2, 2, 1);
+            propertiesGrid.add(param1Field, 0, 3, 2, 1);
+            propertiesGrid.add(param2Label, 0, 4, 2, 1);
+            propertiesGrid.add(param2Field, 0, 5, 2, 1);
             intersectionTypeCombo.getSelectionModel().selectFirst();
             break;
         case PLACING_ROAD:
@@ -201,8 +218,8 @@ public class MainController
             addIntersectionButton.setDisable(true);
             addCarButton.setDisable(true);
             firstPicked = null;
-            propertiesGrid.add(roadSpeedLabel, 0, 0);
-            propertiesGrid.add(roadSpeedField, 1, 0);
+            propertiesGrid.add(roadSpeedLabel, 0, 0, 2, 1);
+            propertiesGrid.add(roadSpeedField, 0, 1, 2, 1);
             roadSpeedField.setText("35");
             validationLabel.setText("Select the first intersection.");
             break;
@@ -210,12 +227,12 @@ public class MainController
             addCarButton.setText("Done");
             addIntersectionButton.setDisable(true);
             addRoadButton.setDisable(true);
-            propertiesGrid.add(carMaxSpeedLabel, 0, 0);
-            propertiesGrid.add(carMaxSpeedField, 1, 0);
-            propertiesGrid.add(carAccelLabel, 0, 1);
-            propertiesGrid.add(carAccelField, 1, 1);
+            propertiesGrid.add(carMaxSpeedLabel, 0, 0, 2, 1);
+            propertiesGrid.add(carMaxSpeedField, 0, 1, 2, 1);
+            propertiesGrid.add(carAccelLabel, 0, 2, 2, 1);
+            propertiesGrid.add(carAccelField, 0, 3, 2, 1);
             carMaxSpeedField.setText("30");
-            carAccelField.setText("2");
+            carAccelField.setText("15.0");
             validationLabel.setText("Click an intersection to spawn a car.");
             break;
         case NORMAL:
@@ -236,13 +253,13 @@ public class MainController
         param2Field = new TextField();
 
         // Road controls
-        roadSpeedLabel = new Label("Speed limit (m/s):");
+        roadSpeedLabel = new Label("Speed (MPH):");
         roadSpeedField = new TextField();
 
         // Car controls
-        carMaxSpeedLabel = new Label("Max speed (m/s):");
+        carMaxSpeedLabel = new Label("Max Spd (MPH):");
         carMaxSpeedField = new TextField();
-        carAccelLabel = new Label("Acceleration (m/s^2):");
+        carAccelLabel = new Label("0-60 Time (s)");
         carAccelField = new TextField();
     }
 
@@ -258,8 +275,8 @@ public class MainController
         addRoadButton.setDisable(false);
         addCarButton.setDisable(false);
 
-        propertiesPane.setVisible(false);
         propertiesGrid.getChildren().clear();
+        propertiesGrid.add(propertiesPlaceholderLabel, 0, 0, 2, 1);
         validationLabel.setText("");
 
         firstPicked = null;
@@ -274,7 +291,7 @@ public class MainController
     {
         if ("Traffic Light".equals(type))
         {
-            param1Label.setText("Total Cycle (s):");
+            param1Label.setText("Cycle (s):");
             param1Field.setText("20");
             param2Label.setText("Yellow (s):");
             param2Field.setText("3");
@@ -282,7 +299,7 @@ public class MainController
             param2Field.setVisible(true);
         } else if ("Roundabout".equals(type))
         {
-            param1Label.setText("Speed (m/s):");
+            param1Label.setText("Speed (MPH):");
             param1Field.setText("15");
             param2Label.setVisible(false);
             param2Field.setVisible(false);
@@ -364,13 +381,14 @@ public class MainController
                 return Optional.of(new SignalisedIntersection(x, y, totalTime, yellow));
             } else if ("Roundabout".equals(type))
             {
-                double speed = Double.parseDouble(param1Field.getText());
-                if (speed <= 0)
+                double speedMph = Double.parseDouble(param1Field.getText());
+                if (speedMph <= 0)
                 {
                     validationLabel.setText("Speed must be positive.");
                     return Optional.empty();
                 }
-                return Optional.of(new Roundabout(x, y, speed));
+                double speedMps = UnitConverter.mphToMps(speedMph);
+                return Optional.of(new Roundabout(x, y, speedMps));
             }
         } catch (NumberFormatException e)
         {
@@ -385,13 +403,13 @@ public class MainController
         validationLabel.setText("");
         try
         {
-            double speed = Double.parseDouble(roadSpeedField.getText());
-            if (speed <= 0)
+            double speedMph = Double.parseDouble(roadSpeedField.getText());
+            if (speedMph <= 0)
             {
                 validationLabel.setText("Speed must be positive.");
                 return Optional.empty();
             }
-            return Optional.of(speed);
+            return Optional.of(UnitConverter.mphToMps(speedMph));
         } catch (NumberFormatException e)
         {
             validationLabel.setText("Invalid number for speed.");
@@ -404,14 +422,16 @@ public class MainController
         validationLabel.setText("");
         try
         {
-            double v = Double.parseDouble(carMaxSpeedField.getText());
-            double a = Double.parseDouble(carAccelField.getText());
-            if (v <= 0 || a <= 0)
+            double vMph = Double.parseDouble(carMaxSpeedField.getText());
+            double timeTo60 = Double.parseDouble(carAccelField.getText());
+            if (vMph <= 0 || timeTo60 <= 0)
             {
                 validationLabel.setText("Car properties must be positive.");
                 return Optional.empty();
             }
-            return Optional.of(new Car(engine.roadNetwork(), v, a));
+            double vMps = UnitConverter.mphToMps(vMph);
+            double aMps2 = UnitConverter.MPH_60_IN_MPS / timeTo60;
+            return Optional.of(new Car(engine.roadNetwork(), vMps, aMps2));
         } catch (NumberFormatException e)
         {
             validationLabel.setText("Invalid number format in car properties.");
@@ -436,14 +456,14 @@ public class MainController
 
         if (intersection instanceof SignalisedIntersection)
         {
-            // Edit functionality for SignalisedIntersection can be expanded here
             grid.add(new Label("Editing is not fully implemented for this type."), 0, 0);
             dialog.setResultConverter(btn -> btn == deleteButtonType);
         } else if (intersection instanceof Roundabout)
         {
             Roundabout model = (Roundabout) intersection;
-            TextField speed = new TextField(String.valueOf(model.getSpeedLimit()));
-            grid.add(new Label("Speed (m/s):"), 0, 0);
+            double speedMph = UnitConverter.mpsToMph(model.getSpeedLimit());
+            TextField speed = new TextField(String.format("%.1f", speedMph));
+            grid.add(new Label("Speed (MPH):"), 0, 0);
             grid.add(speed, 1, 0);
 
             dialog.setResultConverter(btn ->
@@ -452,7 +472,8 @@ public class MainController
                 {
                     try
                     {
-                        model.setSpeedLimit(Double.parseDouble(speed.getText()));
+                        double newSpeedMph = Double.parseDouble(speed.getText());
+                        model.setSpeedLimit(UnitConverter.mphToMps(newSpeedMph));
                     } catch (NumberFormatException e)
                     {
                         System.err.println("Invalid number format in edit dialog.");
@@ -498,8 +519,9 @@ public class MainController
         dialog.getDialogPane().getButtonTypes().addAll(update, delete, ButtonType.CANCEL);
 
         GridPane g = new GridPane();
-        TextField spd = new TextField(String.valueOf(road.speedLimit()));
-        g.add(new Label("Speed (m/s):"), 0, 0);
+        double speedMph = UnitConverter.mpsToMph(road.speedLimit());
+        TextField spd = new TextField(String.format("%.1f", speedMph));
+        g.add(new Label("Speed (MPH):"), 0, 0);
         g.add(spd, 1, 0);
         dialog.getDialogPane().setContent(g);
 
@@ -507,7 +529,8 @@ public class MainController
         {
             if (btn == update)
             {
-                road.setSpeedLimit(Double.parseDouble(spd.getText()));
+                double newSpeedMph = Double.parseDouble(spd.getText());
+                road.setSpeedLimit(UnitConverter.mphToMps(newSpeedMph));
             }
             return btn == delete;
         });
@@ -527,14 +550,24 @@ public class MainController
         dialog.getDialogPane().getButtonTypes().addAll(apply, ButtonType.CANCEL);
 
         GridPane g = new GridPane();
+        double maxSpdMph = UnitConverter.mpsToMph(car.getMaxSpeed());
         g.setHgap(10);
         g.setVgap(10);
         g.setPadding(new Insets(20, 150, 10, 10));
-        TextField maxSpd = new TextField(String.valueOf(car.getMaxSpeed()));
-        TextField accel = new TextField(String.valueOf(car.getAcceleration()));
-        g.add(new Label("Max speed (m/s):"), 0, 0);
+        TextField maxSpd = new TextField(String.format("%.1f", maxSpdMph));
+
+        double accelMps2 = car.getAcceleration();
+        String timeTo60Text = "";
+        if (accelMps2 > 1e-6)
+        {
+            double timeTo60 = UnitConverter.MPH_60_IN_MPS / accelMps2;
+            timeTo60Text = String.format("%.2f", timeTo60);
+        }
+
+        TextField accel = new TextField(timeTo60Text);
+        g.add(new Label("Max Spd (MPH):"), 0, 0);
         g.add(maxSpd, 1, 0);
-        g.add(new Label("Acceleration (m/s^2):"), 0, 1);
+        g.add(new Label("0-60 Time (s)"), 0, 1);
         g.add(accel, 1, 1);
         dialog.getDialogPane().setContent(g);
 
@@ -544,8 +577,16 @@ public class MainController
             {
                 try
                 {
-                    car.setMaxSpeed(Double.parseDouble(maxSpd.getText()));
-                    car.setAcceleration(Double.parseDouble(accel.getText()));
+                    double newMaxSpdMph = Double.parseDouble(maxSpd.getText());
+                    car.setMaxSpeed(UnitConverter.mphToMps(newMaxSpdMph));
+
+                    double newTimeTo60 = Double.parseDouble(accel.getText());
+                    if (newTimeTo60 > 1e-6)
+                    {
+                        double newAccelMps2 = UnitConverter.MPH_60_IN_MPS / newTimeTo60;
+                        car.setAcceleration(newAccelMps2);
+                    }
+
                 } catch (NumberFormatException e)
                 {
                     System.err.println("Bad number");
