@@ -1,8 +1,9 @@
+// src/main/java/trafficsim/ui/controller/MainController.java
+
 package trafficsim.ui.controller;
 
 import java.util.List;
 import java.util.Optional;
-
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -10,19 +11,15 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
-
-import trafficsim.ui.adapter.UnitConverter;
 import trafficsim.core.model.Car;
 import trafficsim.core.model.Intersection;
 import trafficsim.core.model.Road;
@@ -30,6 +27,7 @@ import trafficsim.core.model.Roundabout;
 import trafficsim.core.model.SignalisedIntersection;
 import trafficsim.core.sim.SimulationEngine;
 import trafficsim.ui.adapter.IntersectionUtil;
+import trafficsim.ui.adapter.UnitConverter;
 import trafficsim.ui.view.SimulationRenderer;
 import trafficsim.ui.view.intersection.IntersectionView;
 import trafficsim.ui.view.intersection.SignalisedIntersectionView;
@@ -70,16 +68,25 @@ public class MainController
     private GridPane propertiesGrid;
     @FXML
     private Label validationLabel;
+    @FXML
+    private HBox editButtonsBox;
+    @FXML
+    private Button applyEditButton;
+    @FXML
+    private Button deleteButton;
+    @FXML
+    private Button cancelEditButton;
 
     private SimulationEngine engine;
     private SimulationRenderer simulationRenderer;
 
     public enum InteractionMode {
-        NORMAL, PLACING_INTERSECTION, PLACING_ROAD, PLACING_CAR
+        NORMAL, PLACING_INTERSECTION, PLACING_ROAD, PLACING_CAR, EDITING,
     }
 
     private InteractionMode currentMode = InteractionMode.NORMAL;
     private Intersection firstPicked = null; // for roads
+    private Object selectedForEdit = null;
 
     private ComboBox<String> intersectionTypeCombo;
     private Label param1Label, param2Label;
@@ -105,10 +112,9 @@ public class MainController
         simulationStackPane.setOnMouseClicked(this::handlePaneClick);
 
         createPropertyControls();
-        propertiesPlaceholderLabel = new Label("Select an 'Add' action above to configure properties.");
+        propertiesPlaceholderLabel = new Label("Select an 'Add' action or click an item to edit properties.");
         propertiesPlaceholderLabel.setWrapText(true);
-        propertiesGrid.add(propertiesPlaceholderLabel, 0, 0, 2, 1); // Span 2 columns
-        propertiesPane.setVisible(true);
+        resetToNormalMode();
 
         AnimationTimer timer = new AnimationTimer() {
             @Override
@@ -159,7 +165,7 @@ public class MainController
     {
         if (currentMode == InteractionMode.PLACING_INTERSECTION)
         {
-            resetToAddMode();
+            resetToNormalMode();
         } else
         {
             setupMode(InteractionMode.PLACING_INTERSECTION);
@@ -171,7 +177,7 @@ public class MainController
     {
         if (currentMode == InteractionMode.PLACING_ROAD)
         {
-            resetToAddMode();
+            resetToNormalMode();
         } else
         {
             setupMode(InteractionMode.PLACING_ROAD);
@@ -183,7 +189,7 @@ public class MainController
     {
         if (currentMode == InteractionMode.PLACING_CAR)
         {
-            resetToAddMode();
+            resetToNormalMode();
         } else
         {
             setupMode(InteractionMode.PLACING_CAR);
@@ -192,58 +198,68 @@ public class MainController
 
     private void setupMode(InteractionMode mode)
     {
-        resetToAddMode();
+        resetToNormalMode();
 
         currentMode = mode;
         propertiesPane.setVisible(true);
         propertiesGrid.getChildren().clear();
         validationLabel.setText("");
-        simulationStackPane.getScene().setCursor(Cursor.CROSSHAIR);
+
+        int row = 0;
 
         switch (mode) {
         case PLACING_INTERSECTION:
             addIntersectionButton.setText("Done");
             addRoadButton.setDisable(true);
             addCarButton.setDisable(true);
-            propertiesGrid.add(new Label("Type:"), 0, 0, 2, 1);
-            propertiesGrid.add(intersectionTypeCombo, 0, 1, 2, 1);
-            propertiesGrid.add(param1Label, 0, 2, 2, 1);
-            propertiesGrid.add(param1Field, 0, 3, 2, 1);
-            propertiesGrid.add(param2Label, 0, 4, 2, 1);
-            propertiesGrid.add(param2Field, 0, 5, 2, 1);
+            propertiesGrid.add(new Label("Type:"), 0, row++, 2, 1);
+            propertiesGrid.add(intersectionTypeCombo, 0, row++, 2, 1);
+            propertiesGrid.add(param1Label, 0, row++, 2, 1);
+            propertiesGrid.add(param1Field, 0, row++, 2, 1);
+            propertiesGrid.add(param2Label, 0, row++, 2, 1);
+            propertiesGrid.add(param2Field, 0, row++, 2, 1);
             intersectionTypeCombo.getSelectionModel().selectFirst();
+            simulationStackPane.getScene().setCursor(Cursor.CROSSHAIR);
             break;
         case PLACING_ROAD:
             addRoadButton.setText("Done");
             addIntersectionButton.setDisable(true);
             addCarButton.setDisable(true);
             firstPicked = null;
-            propertiesGrid.add(roadSpeedLabel, 0, 0, 2, 1);
-            propertiesGrid.add(roadSpeedField, 0, 1, 2, 1);
+            propertiesGrid.add(roadSpeedLabel, 0, row++, 2, 1);
+            propertiesGrid.add(roadSpeedField, 0, row++, 2, 1);
             roadSpeedField.setText("35");
             validationLabel.setText("Select the first intersection.");
+            simulationStackPane.getScene().setCursor(Cursor.CROSSHAIR);
             break;
         case PLACING_CAR:
             addCarButton.setText("Done");
             addIntersectionButton.setDisable(true);
             addRoadButton.setDisable(true);
-            propertiesGrid.add(carMaxSpeedLabel, 0, 0, 2, 1);
-            propertiesGrid.add(carMaxSpeedField, 0, 1, 2, 1);
-            propertiesGrid.add(carAccelLabel, 0, 2, 2, 1);
-            propertiesGrid.add(carAccelField, 0, 3, 2, 1);
+            propertiesGrid.add(carMaxSpeedLabel, 0, row++, 2, 1);
+            propertiesGrid.add(carMaxSpeedField, 0, row++, 2, 1);
+            propertiesGrid.add(carAccelLabel, 0, row++, 2, 1);
+            propertiesGrid.add(carAccelField, 0, row++, 2, 1);
             carMaxSpeedField.setText("30");
             carAccelField.setText("15.0");
             validationLabel.setText("Click an intersection to spawn a car.");
+            simulationStackPane.getScene().setCursor(Cursor.CROSSHAIR);
+            break;
+        case EDITING:
+            addIntersectionButton.setDisable(true);
+            addRoadButton.setDisable(true);
+            addCarButton.setDisable(true);
+            editButtonsBox.setVisible(true);
+            editButtonsBox.setManaged(true);
             break;
         case NORMAL:
-            // nothing for now
+            // Handled by resetToNormalMode()
             break;
         }
     }
 
     private void createPropertyControls()
     {
-        // Intersection controls
         intersectionTypeCombo = new ComboBox<>();
         intersectionTypeCombo.getItems().setAll("Traffic Light", "Roundabout");
         intersectionTypeCombo.valueProperty().addListener((obs, oldVal, newVal) -> updateIntersectionFields(newVal));
@@ -252,20 +268,19 @@ public class MainController
         param2Label = new Label();
         param2Field = new TextField();
 
-        // Road controls
         roadSpeedLabel = new Label("Speed (MPH):");
         roadSpeedField = new TextField();
 
-        // Car controls
         carMaxSpeedLabel = new Label("Max Spd (MPH):");
         carMaxSpeedField = new TextField();
         carAccelLabel = new Label("0-60 Time (s)");
         carAccelField = new TextField();
     }
 
-    private void resetToAddMode()
+    private void resetToNormalMode()
     {
         currentMode = InteractionMode.NORMAL;
+        selectedForEdit = null;
 
         addIntersectionButton.setText("Add Intersection");
         addRoadButton.setText("Add Road");
@@ -278,6 +293,9 @@ public class MainController
         propertiesGrid.getChildren().clear();
         propertiesGrid.add(propertiesPlaceholderLabel, 0, 0, 2, 1);
         validationLabel.setText("");
+
+        editButtonsBox.setVisible(false);
+        editButtonsBox.setManaged(false);
 
         firstPicked = null;
 
@@ -439,162 +457,214 @@ public class MainController
         }
     }
 
-    public void showEditIntersectionDialog(Intersection intersection)
+    public void selectForEditing(Object item)
     {
-        Dialog<Boolean> dialog = new Dialog<>();
-        dialog.setTitle("Edit Intersection");
-        dialog.setHeaderText("Update properties for " + intersection.getClass().getSimpleName());
-
-        ButtonType updateButtonType = new ButtonType("Update", ButtonBar.ButtonData.OK_DONE);
-        ButtonType deleteButtonType = new ButtonType("Delete", ButtonBar.ButtonData.OTHER);
-        dialog.getDialogPane().getButtonTypes().addAll(updateButtonType, deleteButtonType, ButtonType.CANCEL);
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 150, 10, 10));
-
-        if (intersection instanceof SignalisedIntersection)
+        if (currentMode != InteractionMode.NORMAL)
         {
-            grid.add(new Label("Editing is not fully implemented for this type."), 0, 0);
-            dialog.setResultConverter(btn -> btn == deleteButtonType);
-        } else if (intersection instanceof Roundabout)
+            return;
+        }
+        setupMode(InteractionMode.EDITING);
+        selectedForEdit = item;
+        populatePropertiesForEdit(item);
+    }
+
+    private void populatePropertiesForEdit(Object item)
+    {
+        propertiesGrid.getChildren().clear();
+        deleteButton.setVisible(!(item instanceof Car));
+        int row = 0;
+
+        if (item instanceof SignalisedIntersection)
         {
-            Roundabout model = (Roundabout) intersection;
+            validationLabel.setText("Editing Signalised Intersection");
+            SignalisedIntersection model = (SignalisedIntersection) item;
+
+            param1Label.setText("Cycle (s):");
+            param1Field.setText(String.format("%.1f", model.getTotalCycleTime()));
+            propertiesGrid.add(param1Label, 0, row++, 2, 1);
+            propertiesGrid.add(param1Field, 0, row++, 2, 1);
+
+            param2Label.setText("Yellow (s):");
+            param2Field.setText(String.format("%.1f", model.getYellowDuration()));
+            propertiesGrid.add(param2Label, 0, row++, 2, 1);
+            propertiesGrid.add(param2Field, 0, row++, 2, 1);
+        } else if (item instanceof Roundabout)
+        {
+            validationLabel.setText("Editing Roundabout");
+            Roundabout model = (Roundabout) item;
             double speedMph = UnitConverter.mpsToMph(model.getSpeedLimit());
-            TextField speed = new TextField(String.format("%.1f", speedMph));
-            grid.add(new Label("Speed (MPH):"), 0, 0);
-            grid.add(speed, 1, 0);
 
-            dialog.setResultConverter(btn ->
-            {
-                if (btn == updateButtonType)
-                {
-                    try
-                    {
-                        double newSpeedMph = Double.parseDouble(speed.getText());
-                        model.setSpeedLimit(UnitConverter.mphToMps(newSpeedMph));
-                    } catch (NumberFormatException e)
-                    {
-                        System.err.println("Invalid number format in edit dialog.");
-                    }
-                }
-                return btn == deleteButtonType;
-            });
-        }
-
-        dialog.getDialogPane().setContent(grid);
-        Optional<Boolean> deleteRequested = dialog.showAndWait();
-
-        if (deleteRequested.isPresent() && deleteRequested.get())
+            param1Label.setText("Speed (MPH):");
+            param1Field.setText(String.format("%.1f", speedMph));
+            propertiesGrid.add(param1Label, 0, row++, 2, 1);
+            propertiesGrid.add(param1Field, 0, row++, 2, 1);
+        } else if (item instanceof Road)
         {
-            List<Road> removeRoads = engine.removeIntersection(intersection);
-            simulationRenderer.removeIntersection(intersection);
-            for (Road road : removeRoads)
+            validationLabel.setText("Editing Road");
+            Road model = (Road) item;
+            double speedMph = UnitConverter.mpsToMph(model.speedLimit());
+
+            roadSpeedLabel.setText("Speed (MPH):");
+            roadSpeedField.setText(String.format("%.1f", speedMph));
+            propertiesGrid.add(roadSpeedLabel, 0, row++, 2, 1);
+            propertiesGrid.add(roadSpeedField, 0, row++, 2, 1);
+        } else if (item instanceof Car)
+        {
+            validationLabel.setText("Editing Car");
+            Car model = (Car) item;
+
+            double maxSpdMph = UnitConverter.mpsToMph(model.getMaxSpeed());
+            carMaxSpeedLabel.setText("Max Spd (MPH):");
+            carMaxSpeedField.setText(String.format("%.1f", maxSpdMph));
+            propertiesGrid.add(carMaxSpeedLabel, 0, row++, 2, 1);
+            propertiesGrid.add(carMaxSpeedField, 0, row++, 2, 1);
+
+            double accelMps2 = model.getAcceleration();
+            String timeTo60Text = "";
+            if (accelMps2 > 1e-6)
             {
-                simulationRenderer.removeRoad(road);
-                Intersection neighbor = road.to().equals(intersection) ? road.from() : road.to();
-
-                if (neighbor instanceof SignalisedIntersection)
-                {
-                    SignalisedIntersection sigNeighbor = (SignalisedIntersection) neighbor;
-                    sigNeighbor.unregisterIncomingRoad(road);
-
-                    IntersectionView viewMgr = simulationRenderer.getIntersectionView(neighbor);
-                    if (viewMgr instanceof SignalisedIntersectionView)
-                    {
-                        ((SignalisedIntersectionView) viewMgr).removeSignalForRoad(road, lightPane);
-                    }
-                }
+                double timeTo60 = UnitConverter.MPH_60_IN_MPS / accelMps2;
+                timeTo60Text = String.format("%.2f", timeTo60);
             }
+            carAccelLabel.setText("0-60 Time (s)");
+            carAccelField.setText(timeTo60Text);
+            propertiesGrid.add(carAccelLabel, 0, row++, 2, 1);
+            propertiesGrid.add(carAccelField, 0, row++, 2, 1);
         }
     }
 
-    public void showEditRoadDialog(Road road)
+    @FXML
+    private void handleApplyEdit()
     {
-        Dialog<Boolean> dialog = new Dialog<>();
-        dialog.setTitle("Edit Road");
-        ButtonType update = new ButtonType("Update", ButtonBar.ButtonData.OK_DONE);
-        ButtonType delete = new ButtonType("Delete", ButtonBar.ButtonData.OTHER);
-        dialog.getDialogPane().getButtonTypes().addAll(update, delete, ButtonType.CANCEL);
-
-        GridPane g = new GridPane();
-        double speedMph = UnitConverter.mpsToMph(road.speedLimit());
-        TextField spd = new TextField(String.format("%.1f", speedMph));
-        g.add(new Label("Speed (MPH):"), 0, 0);
-        g.add(spd, 1, 0);
-        dialog.getDialogPane().setContent(g);
-
-        dialog.setResultConverter(btn ->
+        if (currentMode != InteractionMode.EDITING || selectedForEdit == null)
         {
-            if (btn == update)
+            return;
+        }
+        boolean success = applyChanges(selectedForEdit);
+        if (success)
+        {
+            resetToNormalMode();
+        }
+    }
+
+    private boolean applyChanges(Object item)
+    {
+        try
+        {
+            if (item instanceof SignalisedIntersection)
             {
-                double newSpeedMph = Double.parseDouble(spd.getText());
-                road.setSpeedLimit(UnitConverter.mphToMps(newSpeedMph));
-            }
-            return btn == delete;
-        });
+                SignalisedIntersection model = (SignalisedIntersection) item;
+                double newTotalTime = Double.parseDouble(param1Field.getText());
+                double newYellow = Double.parseDouble(param2Field.getText());
+                if (newTotalTime <= 0 || newYellow <= 0 || newYellow >= newTotalTime)
+                {
+                    validationLabel.setText("Invalid times. Ensure total > yellow > 0.");
+                    return false;
+                }
+                model.setTotalCycleTime(newTotalTime);
+                model.setYellowDuration(newYellow);
+            } else if (item instanceof Roundabout)
+            {
+                Roundabout model = (Roundabout) item;
+                double newSpeedMph = Double.parseDouble(param1Field.getText());
+                if (newSpeedMph <= 0)
+                {
+                    validationLabel.setText("Speed must be positive.");
+                    return false;
+                }
+                model.setSpeedLimit(UnitConverter.mphToMps(newSpeedMph));
+            } else if (item instanceof Road)
+            {
+                Road model = (Road) item;
+                double newSpeedMph = Double.parseDouble(roadSpeedField.getText());
+                if (newSpeedMph <= 0)
+                {
+                    validationLabel.setText("Speed must be positive.");
+                    return false;
+                }
+                model.setSpeedLimit(UnitConverter.mphToMps(newSpeedMph));
+            } else if (item instanceof Car)
+            {
+                Car model = (Car) item;
+                double newMaxSpdMph = Double.parseDouble(carMaxSpeedField.getText());
+                double newTimeTo60 = Double.parseDouble(carAccelField.getText());
 
-        if (dialog.showAndWait().orElse(false))
+                if (newMaxSpdMph <= 0 || newTimeTo60 <= 0)
+                {
+                    validationLabel.setText("Car properties must be positive.");
+                    return false;
+                }
+                model.setMaxSpeed(UnitConverter.mphToMps(newMaxSpdMph));
+                if (newTimeTo60 > 1e-6)
+                {
+                    double newAccelMps2 = UnitConverter.MPH_60_IN_MPS / newTimeTo60;
+                    model.setAcceleration(newAccelMps2);
+                }
+            }
+        } catch (NumberFormatException e)
         {
-            engine.removeRoad(road);
+            validationLabel.setText("Invalid number format.");
+            return false;
+        }
+        return true;
+    }
+
+    @FXML
+    private void handleCancelEdit()
+    {
+        resetToNormalMode();
+    }
+
+    @FXML
+    private void handleDelete()
+    {
+        if (currentMode != InteractionMode.EDITING || selectedForEdit == null)
+        {
+            return;
+        }
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Deletion");
+        alert.setHeaderText("Are you sure you want to delete this item?");
+        alert.setContentText("This action cannot be undone.");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK)
+        {
+            if (selectedForEdit instanceof Intersection)
+            {
+                deleteIntersection((Intersection) selectedForEdit);
+            } else if (selectedForEdit instanceof Road)
+            {
+                engine.removeRoad((Road) selectedForEdit);
+                simulationRenderer.removeRoad((Road) selectedForEdit);
+            }
+            // Car deletion is not supported
+            resetToNormalMode();
+        }
+    }
+
+    private void deleteIntersection(Intersection intersection)
+    {
+        List<Road> removedRoads = engine.removeIntersection(intersection);
+        simulationRenderer.removeIntersection(intersection);
+        for (Road road : removedRoads)
+        {
             simulationRenderer.removeRoad(road);
-        }
-    }
+            Intersection neighbor = road.to().equals(intersection) ? road.from() : road.to();
 
-    public void showEditCarDialog(Car car)
-    {
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Edit Car");
-        ButtonType apply = new ButtonType("Apply", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(apply, ButtonType.CANCEL);
-
-        GridPane g = new GridPane();
-        double maxSpdMph = UnitConverter.mpsToMph(car.getMaxSpeed());
-        g.setHgap(10);
-        g.setVgap(10);
-        g.setPadding(new Insets(20, 150, 10, 10));
-        TextField maxSpd = new TextField(String.format("%.1f", maxSpdMph));
-
-        double accelMps2 = car.getAcceleration();
-        String timeTo60Text = "";
-        if (accelMps2 > 1e-6)
-        {
-            double timeTo60 = UnitConverter.MPH_60_IN_MPS / accelMps2;
-            timeTo60Text = String.format("%.2f", timeTo60);
-        }
-
-        TextField accel = new TextField(timeTo60Text);
-        g.add(new Label("Max Spd (MPH):"), 0, 0);
-        g.add(maxSpd, 1, 0);
-        g.add(new Label("0-60 Time (s)"), 0, 1);
-        g.add(accel, 1, 1);
-        dialog.getDialogPane().setContent(g);
-
-        dialog.setResultConverter(btn ->
-        {
-            if (btn == apply)
+            if (neighbor instanceof SignalisedIntersection)
             {
-                try
-                {
-                    double newMaxSpdMph = Double.parseDouble(maxSpd.getText());
-                    car.setMaxSpeed(UnitConverter.mphToMps(newMaxSpdMph));
+                SignalisedIntersection sigNeighbor = (SignalisedIntersection) neighbor;
+                sigNeighbor.unregisterIncomingRoad(road);
 
-                    double newTimeTo60 = Double.parseDouble(accel.getText());
-                    if (newTimeTo60 > 1e-6)
-                    {
-                        double newAccelMps2 = UnitConverter.MPH_60_IN_MPS / newTimeTo60;
-                        car.setAcceleration(newAccelMps2);
-                    }
-
-                } catch (NumberFormatException e)
+                IntersectionView viewMgr = simulationRenderer.getIntersectionView(neighbor);
+                if (viewMgr instanceof SignalisedIntersectionView)
                 {
-                    System.err.println("Bad number");
+                    ((SignalisedIntersectionView) viewMgr).removeSignalForRoad(road, lightPane);
                 }
             }
-            return null;
-        });
-        dialog.showAndWait();
+        }
     }
 
     private boolean isFarEnough(double newPxX, double newPxY)
@@ -609,13 +679,6 @@ public class MainController
             }
         }
         return true;
-    }
-
-    private void showWarning(String msg)
-    {
-        Alert a = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK);
-        a.setHeaderText(null);
-        a.showAndWait();
     }
 
     @FXML

@@ -130,4 +130,25 @@ public final class SignalisedIntersection implements Intersection
         return group.state();
     }
 
+    public double getTotalCycleTime()
+    {
+        return totalCycleTime;
+    }
+
+    public void setTotalCycleTime(double totalCycleTime)
+    {
+        this.totalCycleTime = totalCycleTime;
+    }
+
+    public double getYellowDuration()
+    {
+        return yellowDuration;
+    }
+
+    public void setYellowDuration(double yellowDuration)
+    {
+        this.yellowDuration = yellowDuration;
+        recalculateDurations();
+    }
+
 }

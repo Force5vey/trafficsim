@@ -1,5 +1,9 @@
+// src/main/java/trafficsim/ui/view/SimulationRenderer.java
+
 package trafficsim.ui.view;
 
+import java.util.*;
+import java.util.function.Consumer;
 import javafx.animation.AnimationTimer;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -7,7 +11,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.transform.Rotate;
 
 import trafficsim.core.model.*;
 import trafficsim.core.sim.SimulationEngine;
@@ -15,9 +18,6 @@ import trafficsim.ui.adapter.*;
 import trafficsim.ui.controller.MainController;
 import trafficsim.ui.controller.MainController.InteractionMode;
 import trafficsim.ui.view.intersection.*;
-
-import java.util.*;
-import java.util.function.Consumer;
 
 public class SimulationRenderer
 {
@@ -110,7 +110,7 @@ public class SimulationRenderer
             if (viewMgr instanceof SignalisedIntersectionView)
             {
                 Node signalNode = ((SignalisedIntersectionView) viewMgr).createSignalForRoad(road,
-                        controller::showEditIntersectionDialog, controller);
+                        controller::selectForEditing, controller);
                 lightPane.getChildren().add(signalNode);
             }
         }
@@ -122,6 +122,16 @@ public class SimulationRenderer
         carViews.put(car, view);
         carAdapters.put(car, new CarAdapter(car));
         carPane.getChildren().add(view);
+    }
+
+    public void removeCar(Car car)
+    {
+        Rectangle view = carViews.remove(car);
+        if (view != null)
+        {
+            carPane.getChildren().remove(view);
+        }
+        carAdapters.remove(car);
     }
 
     private void refreshFrame()
@@ -146,18 +156,40 @@ public class SimulationRenderer
     {
         Rectangle r = new Rectangle(40, 20);
         r.setFill(Color.CORNFLOWERBLUE);
+        r.setOnMouseEntered(e ->
+        {
+            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            {
+                r.setStroke(Color.ORANGE);
+                r.getScene().setCursor(Cursor.HAND);
+            }
+        });
+        r.setOnMouseExited(e ->
+        {
+            r.setStroke(null);
+            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            {
+                r.getScene().setCursor(Cursor.DEFAULT);
+            }
+        });
+        r.setOnMouseClicked(e ->
+        {
+            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            {
+                controller.selectForEditing(car);
+            }
+        });
         return r;
     }
 
     private IntersectionView buildViewManager(Intersection intersection)
     {
-        Consumer<Intersection> editCallback = controller::showEditIntersectionDialog;
+        Consumer<Intersection> editCallback = controller::selectForEditing;
         if (intersection instanceof SignalisedIntersection)
         {
             return new SignalisedIntersectionView(intersection, editCallback, controller);
         } else if (intersection instanceof Roundabout)
         {
-            // TODO: Roundabout needs to beupdated to layered pane rnderer
             return new RoundaboutView(intersection, editCallback, controller);
         } else
         {
@@ -213,7 +245,13 @@ public class SimulationRenderer
                 roadPane.getScene().setCursor(Cursor.DEFAULT);
             }
         });
-        line.setOnMouseClicked(e -> controller.showEditRoadDialog(road));
+        line.setOnMouseClicked(e ->
+        {
+            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            {
+                controller.selectForEditing(road);
+            }
+        });
 
         return line;
     }

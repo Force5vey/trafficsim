@@ -118,6 +118,33 @@
                                             blue="0.2" />
                                     </textFill>
                                 </Label>
+                                <HBox
+                                    fx:id="editButtonsBox"
+                                    alignment="CENTER"
+                                    managed="false"
+                                    spacing="5.0"
+                                    visible="false">
+                                    <children>
+                                        <Button
+                                            fx:id="applyEditButton"
+                                            maxWidth="1.7976931348623157E308"
+                                            onAction="#handleApplyEdit"
+                                            text="Apply"
+                                            HBox.hgrow="ALWAYS" />
+                                        <Button
+                                            fx:id="deleteButton"
+                                            maxWidth="1.7976931348623157E308"
+                                            onAction="#handleDelete"
+                                            text="Delete"
+                                            HBox.hgrow="ALWAYS" />
+                                        <Button
+                                            fx:id="cancelEditButton"
+                                            maxWidth="1.7976931348623157E308"
+                                            onAction="#handleCancelEdit"
+                                            text="Cancel"
+                                            HBox.hgrow="ALWAYS" />
+                                    </children>
+                                </HBox>
                             </children>
                         </VBox>
                     </content>

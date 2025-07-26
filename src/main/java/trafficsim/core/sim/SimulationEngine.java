@@ -94,6 +94,11 @@ public final class SimulationEngine
         updatables.add(car);
     }
 
+    public void removeVehicle(Car car)
+    {
+        updatables.remove(car);
+    }
+
     private void step()
     {
         double deltaTime = TICK_MS / 1000.0;
