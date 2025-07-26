@@ -75,7 +75,7 @@ public class Car implements Updatable
 
         if (acceleration < 1e-6)
         {
-            return v < 1e-6;
+            return true;
         }
 
         double stopLine = Math.max(0, road.length() - STOP_LINE_OFFSET_METERS);

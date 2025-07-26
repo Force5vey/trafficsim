@@ -474,6 +474,17 @@ public class MainController
         deleteButton.setVisible(!(item instanceof Car));
         int row = 0;
 
+        param1Label.setVisible(false);
+        param1Field.setVisible(false);
+        param2Label.setVisible(false);
+        param2Field.setVisible(false);
+        roadSpeedLabel.setVisible(false);
+        roadSpeedField.setVisible(false);
+        carMaxSpeedLabel.setVisible(false);
+        carMaxSpeedField.setVisible(false);
+        carAccelLabel.setVisible(false);
+        carAccelField.setVisible(false);
+
         if (item instanceof SignalisedIntersection)
         {
             validationLabel.setText("Editing Signalised Intersection");
@@ -486,6 +497,9 @@ public class MainController
 
             param2Label.setText("Yellow (s):");
             param2Field.setText(String.format("%.1f", model.getYellowDuration()));
+            param2Label.setVisible(true);
+            param2Field.setVisible(true);
+
             propertiesGrid.add(param2Label, 0, row++, 2, 1);
             propertiesGrid.add(param2Field, 0, row++, 2, 1);
         } else if (item instanceof Roundabout)
@@ -496,6 +510,9 @@ public class MainController
 
             param1Label.setText("Speed (MPH):");
             param1Field.setText(String.format("%.1f", speedMph));
+            param1Label.setVisible(true);
+            param1Field.setVisible(true);
+
             propertiesGrid.add(param1Label, 0, row++, 2, 1);
             propertiesGrid.add(param1Field, 0, row++, 2, 1);
         } else if (item instanceof Road)
@@ -506,6 +523,9 @@ public class MainController
 
             roadSpeedLabel.setText("Speed (MPH):");
             roadSpeedField.setText(String.format("%.1f", speedMph));
+            roadSpeedLabel.setVisible(true);
+            roadSpeedLabel.setVisible(true);
+
             propertiesGrid.add(roadSpeedLabel, 0, row++, 2, 1);
             propertiesGrid.add(roadSpeedField, 0, row++, 2, 1);
         } else if (item instanceof Car)
@@ -516,6 +536,9 @@ public class MainController
             double maxSpdMph = UnitConverter.mpsToMph(model.getMaxSpeed());
             carMaxSpeedLabel.setText("Max Spd (MPH):");
             carMaxSpeedField.setText(String.format("%.1f", maxSpdMph));
+            carMaxSpeedLabel.setVisible(true);
+            carMaxSpeedLabel.setVisible(true);
+
             propertiesGrid.add(carMaxSpeedLabel, 0, row++, 2, 1);
             propertiesGrid.add(carMaxSpeedField, 0, row++, 2, 1);
 
@@ -528,6 +551,9 @@ public class MainController
             }
             carAccelLabel.setText("0-60 Time (s)");
             carAccelField.setText(timeTo60Text);
+            carAccelLabel.setVisible(true);
+            carAccelField.setVisible(true);
+
             propertiesGrid.add(carAccelLabel, 0, row++, 2, 1);
             propertiesGrid.add(carAccelField, 0, row++, 2, 1);
         }
