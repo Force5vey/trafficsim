@@ -634,7 +634,5 @@ public class MainController
     private void handleStop()
     {
         engine.stop();
-        // need to reset car's visual position here
-        // need better model-view synchronization on reset
     }
 }

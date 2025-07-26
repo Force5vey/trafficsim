@@ -19,6 +19,9 @@ public class Car implements Updatable
     private double v;
     private double targetV;
 
+    private Road initialRoad;
+    private double initialS;
+
     public Car(RoadNetwork net, double maxSpeed, double acceleration)
     {
         this.net = net;
@@ -38,6 +41,17 @@ public class Car implements Updatable
     {
         this.road = road;
         this.s = Math.max(0.0, Math.min(offsetMeters, road.length()));
+
+        this.initialRoad = this.road;
+        this.initialS = this.s;
+    }
+
+    public void resetToInitialState()
+    {
+        this.road = this.initialRoad;
+        this.s = this.initialS;
+        this.v = 0.0;
+        this.targetV = 0.0;
     }
 
     private boolean shouldStopForLight()

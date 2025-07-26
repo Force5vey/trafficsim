@@ -38,6 +38,14 @@ public final class SimulationEngine
     {
         pause();
         simTimeMillis.set(0);
+
+        for (Updatable u : updatables)
+        {
+            if (u instanceof Car)
+            {
+                ((Car) u).resetToInitialState();
+            }
+        }
     }
 
     public void addVehicle(Car car)
