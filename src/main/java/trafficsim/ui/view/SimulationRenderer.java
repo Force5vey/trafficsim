@@ -167,7 +167,7 @@ public class SimulationRenderer
 
     private Rectangle buildCarView(Car car)
     {
-        Rectangle r = new Rectangle(20, 10);
+        Rectangle r = new Rectangle(30, 15);
         r.setFill(Color.CORNFLOWERBLUE);
         r.setOnMouseEntered(e ->
         {
@@ -228,21 +228,17 @@ public class SimulationRenderer
             double ux = dx / length;
             double uy = dy / length;
 
-            double px = -uy;
-            double py = -ux;
-
-            double offsetX = px * IntersectionUtil.LANE_OFFSET_PX;
-            double offsetY = py * IntersectionUtil.LANE_OFFSET_PX;
+            Vec2 offset = IntersectionUtil.getLaneOffsetVector(road);
 
             double startX = fromX + ROAD_ENDPOINT_OFFSET_PX * ux;
             double startY = fromY + ROAD_ENDPOINT_OFFSET_PX * uy;
             double endX = toX - ROAD_ENDPOINT_OFFSET_PX * ux;
             double endY = toY - ROAD_ENDPOINT_OFFSET_PX * uy;
 
-            line.setStartX(startX + offsetX);
-            line.setStartY(startY + offsetY);
-            line.setEndX(endX + offsetX);
-            line.setEndY(endY + offsetY);
+            line.setStartX(startX + offset.x);
+            line.setStartY(startY + offset.y);
+            line.setEndX(endX + offset.x);
+            line.setEndY(endY + offset.y);
         }
 
         line.setStrokeWidth(8);

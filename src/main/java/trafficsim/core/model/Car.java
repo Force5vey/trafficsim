@@ -209,23 +209,12 @@ public class Car implements Updatable
         double centerX = a.x + dx * t;
         double centerY = a.y + dy * t;
 
-        if (lengthMeters > 1e-6)
-        {
-            double ux = dx / lengthMeters;
-            double uy = dy / lengthMeters;
+        Vec2 offsetPx = IntersectionUtil.getLaneOffsetVector(road);
 
-            double px = -uy;
-            double py = ux;
+        double offsetX_meters = offsetPx.x / IntersectionUtil.PX_PER_M;
+        double offsetY_meters = offsetPx.y / IntersectionUtil.PX_PER_M;
 
-            double offsetMeters = IntersectionUtil.LANE_OFFSET_PX / IntersectionUtil.PX_PER_M;
-
-            double finalX = centerX + px * offsetMeters;
-            double finalY = centerY + py * offsetMeters;
-
-            return new Vec2(finalX, finalY);
-        }
-
-        return new Vec2(centerX, centerY);
+        return new Vec2(centerX + offsetX_meters, centerY + offsetY_meters);
     }
 
     public double headingRad()
