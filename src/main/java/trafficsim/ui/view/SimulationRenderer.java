@@ -7,6 +7,8 @@ import java.util.function.Consumer;
 import javafx.animation.AnimationTimer;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
@@ -29,7 +31,7 @@ public class SimulationRenderer
     private final SimulationEngine engine;
     private final MainController controller;
 
-    private final Map<Car, Rectangle> carViews = new HashMap<>();
+    private final Map<Car, ImageView> carViews = new HashMap<>();
     private final Map<Car, CarAdapter> carAdapters = new HashMap<>();
 
     private final Map<Intersection, IntersectionView> intersectionViewMgrs = new HashMap<>();
@@ -118,7 +120,7 @@ public class SimulationRenderer
 
     public void onCarAdded(Car car)
     {
-        Rectangle view = buildCarView(car);
+        ImageView view = buildCarView(car);
         carViews.put(car, view);
         carAdapters.put(car, new CarAdapter(car));
         carPane.getChildren().add(view);
@@ -126,7 +128,7 @@ public class SimulationRenderer
 
     public void removeCar(Car car)
     {
-        Rectangle view = carViews.remove(car);
+        ImageView view = carViews.remove(car);
         if (view != null)
         {
             carPane.getChildren().remove(view);
@@ -151,12 +153,27 @@ public class SimulationRenderer
     {
         for (Map.Entry<Car, CarAdapter> e : carAdapters.entrySet())
         {
+            Car car = e.getKey();
             CarAdapter adapter = e.getValue();
             adapter.pullFromModel();
 
-            Rectangle view = carViews.get(e.getKey());
-            view.setX(adapter.xProperty().get());
-            view.setY(adapter.yProperty().get());
+            ImageView view = carViews.get(car);
+            if (view == null)
+            {
+                continue;
+            }
+
+            double centerX = adapter.xProperty().get();
+            double centerY = adapter.yProperty().get();
+
+            double fitW = view.getFitWidth();
+            double fitH = view.getFitHeight();
+
+            view.setX(centerX - fitW / 2.0);
+            view.setY(centerY - fitH / 2.0);
+
+            double angleDeg = Math.toDegrees(car.headingRad());
+            view.setRotate(angleDeg);
         }
 
         for (IntersectionView viewMgr : intersectionViewMgrs.values())
@@ -165,34 +182,42 @@ public class SimulationRenderer
         }
     }
 
-    private Rectangle buildCarView(Car car)
+    private ImageView buildCarView(Car car)
     {
-        Rectangle r = new Rectangle(30, 15);
-        r.setFill(Color.CORNFLOWERBLUE);
-        r.setOnMouseEntered(e ->
+        Image img = CarAssetManager.getNextCarImage();
+        ImageView view = new ImageView(img);
+        view.setFitWidth(40);
+        view.setFitHeight(20);
+        view.setPreserveRatio(true);
+        view.setSmooth(true);
+
+        view.setOnMouseEntered(e ->
         {
             if (controller.getCurrentMode() == Mode.NORMAL)
             {
-                r.setStroke(Color.ORANGE);
-                r.getScene().setCursor(Cursor.HAND);
+                view.setStyle("-fx-effect: dropshadow(gaussian, orange, 8, 0.5, 0, 0);");
+                view.getScene().setCursor(Cursor.HAND);
             }
         });
-        r.setOnMouseExited(e ->
+
+        view.setOnMouseExited(e ->
         {
-            r.setStroke(null);
+            view.setStyle("");
             if (controller.getCurrentMode() == Mode.NORMAL)
             {
-                r.getScene().setCursor(Cursor.DEFAULT);
+                view.getScene().setCursor(Cursor.DEFAULT);
             }
         });
-        r.setOnMouseClicked(e ->
+
+        view.setOnMouseClicked(e ->
         {
             if (controller.getCurrentMode() == Mode.NORMAL)
             {
                 controller.selectForEditing(car);
             }
         });
-        return r;
+
+        return view;
     }
 
     private IntersectionView buildViewManager(Intersection intersection)
