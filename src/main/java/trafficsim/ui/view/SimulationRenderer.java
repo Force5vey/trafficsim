@@ -108,15 +108,25 @@ public class SimulationRenderer
         }
     }
 
+    private boolean isCanonical(Road road)
+    {
+        Vec2 from = road.from().position();
+        Vec2 to = road.to().position();
+        return (from.x < to.x) || (from.x == to.x && from.y < to.y);
+    }
+
     public void onRoadAdded(Road road)
     {
         Line line = buildRoadView(road);
         roadViews.put(road, line);
         roadPane.getChildren().add(line);
 
-        List<ImageView> tiles = buildRoadTiles(road);
-        roadTileViews.put(road, tiles);
-        roadPane.getChildren().addAll(tiles);
+        if (isCanonical(road))
+        {
+            List<ImageView> tiles = buildRoadTiles(road);
+            roadTileViews.put(road, tiles);
+            roadPane.getChildren().addAll(tiles);
+        }
 
         Intersection destination = road.to();
         if (destination instanceof SignalisedIntersection)
@@ -354,9 +364,12 @@ public class SimulationRenderer
             tile.setPreserveRatio(true);
             tile.setSmooth(true);
 
+            double tileWidth = tile.getFitWidth();
+            double tileHeight = tile.getImage().getHeight() * (tileWidth / tile.getImage().getWidth());
+
             // Center the tile
-            tile.setX(px - ROAD_TILE_PX / 2.0);
-            tile.setY(py - tileImg.getHeight() / 2.0);
+            tile.setX(px - tileWidth / 2.0);
+            tile.setY(py - tileHeight / 2.0);
 
             tile.setRotate(angleDeg);
 
