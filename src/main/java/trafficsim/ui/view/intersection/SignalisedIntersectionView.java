@@ -21,8 +21,8 @@ import trafficsim.core.model.Vec2;
 
 public class SignalisedIntersectionView extends IntersectionView
 {
-    private static final double SIGNAL_OFFSET_PX = 25.0;
-    private static final double SIGNAL_RADIUS_PX = 5.0;
+    private static final double SIGNAL_OFFSET_PX = 45.0;
+    private static final double SIGNAL_RADIUS_PX = 8.0;
 
     private final Map<Road, Circle> signalViews = new HashMap<>();
     private final SignalisedIntersection sigModel;
@@ -35,13 +35,13 @@ public class SignalisedIntersectionView extends IntersectionView
         double px = model.position().x * 10.0;
         double py = model.position().y * 10.0;
 
-        Rectangle horizontalBar = new Rectangle(40, 16, Color.DARKSLATEGRAY);
-        horizontalBar.setX(px - 20);
-        horizontalBar.setY(py - 8);
+        Rectangle horizontalBar = new Rectangle(50, 20, Color.DARKSLATEGRAY);
+        horizontalBar.setX(px - 25);
+        horizontalBar.setY(py - 10);
 
-        Rectangle verticalBar = new Rectangle(16, 40, Color.DARKSLATEGRAY);
-        verticalBar.setX(px - 8);
-        verticalBar.setY(py - 20);
+        Rectangle verticalBar = new Rectangle(20, 50, Color.DARKSLATEGRAY);
+        verticalBar.setX(px - 10);
+        verticalBar.setY(py - 25);
 
         baseNodes.add(horizontalBar);
         baseNodes.add(verticalBar);

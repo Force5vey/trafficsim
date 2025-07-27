@@ -71,4 +71,9 @@ public final class RoadNetwork
     {
         adj.remove(intersection);
     }
+
+    public void clear()
+    {
+        adj.clear();
+    }
 }

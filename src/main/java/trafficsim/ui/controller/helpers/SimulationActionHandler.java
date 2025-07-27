@@ -86,4 +86,9 @@ public class SimulationActionHandler
         }
     }
 
+    public void clearAll()
+    {
+        engine.clearAll();
+        renderer.clearAll();
+    }
 }

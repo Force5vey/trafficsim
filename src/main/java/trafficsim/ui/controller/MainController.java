@@ -77,6 +77,7 @@ public class MainController
     private SimulationActionHandler actionHandler;
 
     private Object selectedForEdit = null;
+    private boolean isSimStopped = true;
 
     @FXML
     public void initialize()
@@ -143,6 +144,10 @@ public class MainController
     {
         selectedForEdit = null;
         setMode(Mode.NORMAL);
+        if (isSimStopped)
+        {
+            updateStopButtonState();
+        }
     }
 
     @FXML
@@ -289,10 +294,23 @@ public class MainController
         return true;
     }
 
+    private void updateStopButtonState()
+    {
+        if (isSimStopped)
+        {
+            stopButton.setText("Clear");
+        } else
+        {
+            stopButton.setText("Stop");
+        }
+    }
+
     @FXML
     private void handleStart()
     {
         engine.start();
+        isSimStopped = false;
+        updateStopButtonState();
     }
 
     @FXML
@@ -304,6 +322,14 @@ public class MainController
     @FXML
     private void handleStop()
     {
-        engine.stop();
+        if (isSimStopped)
+        {
+            actionHandler.clearAll();
+        } else
+        {
+            engine.stop();
+            isSimStopped = true;
+            updateStopButtonState();
+        }
     }
 }

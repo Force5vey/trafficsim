@@ -16,7 +16,7 @@ public class RoundaboutView extends IntersectionView
         double px = model.position().x * 10.0;
         double py = model.position().y * 10.0;
 
-        Circle roundaboutShape = new Circle(30, Color.DARKGRAY);
+        Circle roundaboutShape = new Circle(45, Color.DARKGRAY);
         roundaboutShape.setStroke(Color.WHITE);
         roundaboutShape.setCenterX(px);
         roundaboutShape.setCenterY(py);

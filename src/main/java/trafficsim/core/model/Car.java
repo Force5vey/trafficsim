@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
+import trafficsim.ui.adapter.IntersectionUtil;
 
 public class Car implements Updatable
 {
@@ -189,39 +190,6 @@ public class Car implements Updatable
 
     }
 
-    // private void enterNextRoad()
-    // {
-    //     Intersection node = road.to();
-    //     Intersection prevNode = road.from();
-    //     List<Road> allOutgoing = net.outgoing(node);
-
-    //     if (allOutgoing.isEmpty())
-    //     {
-    //         road = null;
-    //         return;
-    //     }
-
-    //     List<Road> validChoices;
-    //     if (node instanceof SignalisedIntersection)
-    //     {
-    //         validChoices = allOutgoing.stream().filter(r -> r.to() != prevNode).collect(Collectors.toList());
-    //     } else
-    //     {
-    //         // roundabouts
-    //         validChoices = allOutgoing;
-    //     }
-
-    //     if (validChoices.isEmpty())
-    //     {
-    //         // dead end road
-    //         road = null;
-    //         return;
-    //     }
-
-    //     road = validChoices.get(rng.nextInt(validChoices.size()));
-    //     s = 0.0;
-    // }
-
     public Vec2 worldPos()
     {
         if (road == null)
@@ -232,8 +200,32 @@ public class Car implements Updatable
         Vec2 a = road.from().position();
         Vec2 b = road.to().position();
 
-        double t = road.length() > 0 ? Math.min(1.0, s / road.length()) : 0;
-        return new Vec2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+        double dx = b.x - a.x;
+        double dy = b.y - a.y;
+        double lengthMeters = road.length();
+
+        double t = lengthMeters > 0 ? Math.min(1.0, s / lengthMeters) : 0;
+
+        double centerX = a.x + dx * t;
+        double centerY = a.y + dy * t;
+
+        if (lengthMeters > 1e-6)
+        {
+            double ux = dx / lengthMeters;
+            double uy = dy / lengthMeters;
+
+            double px = -uy;
+            double py = ux;
+
+            double offsetMeters = IntersectionUtil.LANE_OFFSET_PX / IntersectionUtil.PX_PER_M;
+
+            double finalX = centerX + px * offsetMeters;
+            double finalY = centerY + py * offsetMeters;
+
+            return new Vec2(finalX, finalY);
+        }
+
+        return new Vec2(centerX, centerY);
     }
 
     public double headingRad()

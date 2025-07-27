@@ -19,7 +19,7 @@ public abstract class IntersectionView
     protected Circle highlight;
     protected final List<Node> baseNodes = new ArrayList<>();
 
-    private static final double HIGHLIGHT_RADIUS = 25;
+    private static final double HIGHLIGHT_RADIUS = 40;
 
     public IntersectionView(Intersection model, Consumer<Intersection> editAction, MainController controller)
     {

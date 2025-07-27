@@ -71,6 +71,14 @@ public final class SimulationEngine
         return roadsToRemove;
     }
 
+    public void clearAll()
+    {
+        pause();
+        updatables.clear();
+        roadNet.clear();
+        simTimeMillis.set(0);
+    }
+
     public RoadNetwork roadNetwork()
     {
         return roadNet;

@@ -134,6 +134,19 @@ public class SimulationRenderer
         carAdapters.remove(car);
     }
 
+    public void clearAll()
+    {
+        carViews.clear();
+        carAdapters.clear();
+        intersectionViewMgrs.clear();
+        roadViews.clear();
+
+        intersectionPane.getChildren().clear();
+        roadPane.getChildren().clear();
+        carPane.getChildren().clear();
+        lightPane.getChildren().clear();
+    }
+
     private void refreshFrame()
     {
         for (Map.Entry<Car, CarAdapter> e : carAdapters.entrySet())
@@ -154,7 +167,7 @@ public class SimulationRenderer
 
     private Rectangle buildCarView(Car car)
     {
-        Rectangle r = new Rectangle(40, 20);
+        Rectangle r = new Rectangle(20, 10);
         r.setFill(Color.CORNFLOWERBLUE);
         r.setOnMouseEntered(e ->
         {
@@ -215,18 +228,24 @@ public class SimulationRenderer
             double ux = dx / length;
             double uy = dy / length;
 
+            double px = -uy;
+            double py = -ux;
+
+            double offsetX = px * IntersectionUtil.LANE_OFFSET_PX;
+            double offsetY = py * IntersectionUtil.LANE_OFFSET_PX;
+
             double startX = fromX + ROAD_ENDPOINT_OFFSET_PX * ux;
             double startY = fromY + ROAD_ENDPOINT_OFFSET_PX * uy;
             double endX = toX - ROAD_ENDPOINT_OFFSET_PX * ux;
             double endY = toY - ROAD_ENDPOINT_OFFSET_PX * uy;
 
-            line.setStartX(startX);
-            line.setStartY(startY);
-            line.setEndX(endX);
-            line.setEndY(endY);
+            line.setStartX(startX + offsetX);
+            line.setStartY(startY + offsetY);
+            line.setEndX(endX + offsetX);
+            line.setEndY(endY + offsetY);
         }
 
-        line.setStrokeWidth(12);
+        line.setStrokeWidth(8);
         line.setStroke(Color.DIMGRAY);
 
         line.setOnMouseEntered(e ->
