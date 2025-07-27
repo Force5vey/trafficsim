@@ -16,8 +16,8 @@ import trafficsim.core.model.*;
 import trafficsim.core.sim.SimulationEngine;
 import trafficsim.ui.adapter.*;
 import trafficsim.ui.controller.MainController;
-import trafficsim.ui.controller.MainController.InteractionMode;
 import trafficsim.ui.view.intersection.*;
+import trafficsim.ui.controller.helpers.InteractionModeManager.Mode;
 
 public class SimulationRenderer
 {
@@ -158,7 +158,7 @@ public class SimulationRenderer
         r.setFill(Color.CORNFLOWERBLUE);
         r.setOnMouseEntered(e ->
         {
-            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            if (controller.getCurrentMode() == Mode.NORMAL)
             {
                 r.setStroke(Color.ORANGE);
                 r.getScene().setCursor(Cursor.HAND);
@@ -167,14 +167,14 @@ public class SimulationRenderer
         r.setOnMouseExited(e ->
         {
             r.setStroke(null);
-            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            if (controller.getCurrentMode() == Mode.NORMAL)
             {
                 r.getScene().setCursor(Cursor.DEFAULT);
             }
         });
         r.setOnMouseClicked(e ->
         {
-            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            if (controller.getCurrentMode() == Mode.NORMAL)
             {
                 controller.selectForEditing(car);
             }
@@ -231,7 +231,7 @@ public class SimulationRenderer
 
         line.setOnMouseEntered(e ->
         {
-            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            if (controller.getCurrentMode() == Mode.NORMAL)
             {
                 line.setStroke(Color.ORANGE);
                 roadPane.getScene().setCursor(Cursor.HAND);
@@ -240,14 +240,14 @@ public class SimulationRenderer
         line.setOnMouseExited(e ->
         {
             line.setStroke(Color.DIMGRAY);
-            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            if (controller.getCurrentMode() == Mode.NORMAL)
             {
                 roadPane.getScene().setCursor(Cursor.DEFAULT);
             }
         });
         line.setOnMouseClicked(e ->
         {
-            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            if (controller.getCurrentMode() == Mode.NORMAL)
             {
                 controller.selectForEditing(road);
             }

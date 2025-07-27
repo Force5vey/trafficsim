@@ -1,6 +1,7 @@
 package trafficsim.core.model;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -124,15 +125,17 @@ public class Car implements Updatable
         {
             if (potentialNewS >= road.length())
             {
-                double overflowDistance = potentialNewS - road.length();
-                enterNextRoad();
-                if (road != null)
+                Optional<Road> nextRoadOpt = findNextRoad();
+                if (nextRoadOpt.isPresent())
                 {
-                    s = overflowDistance;
-                    v = Math.min(v, road.speedLimit());
+                    double overflowDistance = potentialNewS - road.length();
+                    this.road = nextRoadOpt.get();
+                    this.s = overflowDistance;
+                    this.v = Math.min(v, this.road.speedLimit());
                 } else
                 {
-                    s = 0;
+                    // dead end, no uturns on signalised intersections
+                    s = road.length();
                     v = 0;
                 }
             } else
@@ -140,6 +143,7 @@ public class Car implements Updatable
                 s = potentialNewS;
             }
         }
+
     }
 
     private void decideTargetSpeed()
@@ -156,7 +160,7 @@ public class Car implements Updatable
         }
     }
 
-    private void enterNextRoad()
+    private Optional<Road> findNextRoad()
     {
         Intersection node = road.to();
         Intersection prevNode = road.from();
@@ -164,8 +168,7 @@ public class Car implements Updatable
 
         if (allOutgoing.isEmpty())
         {
-            road = null;
-            return;
+            return Optional.empty();
         }
 
         List<Road> validChoices;
@@ -174,20 +177,50 @@ public class Car implements Updatable
             validChoices = allOutgoing.stream().filter(r -> r.to() != prevNode).collect(Collectors.toList());
         } else
         {
-            // roundabouts
             validChoices = allOutgoing;
         }
 
         if (validChoices.isEmpty())
         {
-            // dead end road
-            road = null;
-            return;
+            return Optional.empty();
         }
 
-        road = validChoices.get(rng.nextInt(validChoices.size()));
-        s = 0.0;
+        return Optional.of(validChoices.get(rng.nextInt(validChoices.size())));
+
     }
+
+    // private void enterNextRoad()
+    // {
+    //     Intersection node = road.to();
+    //     Intersection prevNode = road.from();
+    //     List<Road> allOutgoing = net.outgoing(node);
+
+    //     if (allOutgoing.isEmpty())
+    //     {
+    //         road = null;
+    //         return;
+    //     }
+
+    //     List<Road> validChoices;
+    //     if (node instanceof SignalisedIntersection)
+    //     {
+    //         validChoices = allOutgoing.stream().filter(r -> r.to() != prevNode).collect(Collectors.toList());
+    //     } else
+    //     {
+    //         // roundabouts
+    //         validChoices = allOutgoing;
+    //     }
+
+    //     if (validChoices.isEmpty())
+    //     {
+    //         // dead end road
+    //         road = null;
+    //         return;
+    //     }
+
+    //     road = validChoices.get(rng.nextInt(validChoices.size()));
+    //     s = 0.0;
+    // }
 
     public Vec2 worldPos()
     {
@@ -199,7 +232,7 @@ public class Car implements Updatable
         Vec2 a = road.from().position();
         Vec2 b = road.to().position();
 
-        double t = s / road.length();
+        double t = road.length() > 0 ? Math.min(1.0, s / road.length()) : 0;
         return new Vec2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
     }
 

@@ -21,6 +21,20 @@ public final class RoadNetwork
         return adj.getOrDefault(intersection, List.of());
     }
 
+    public Optional<Road> findOppositeRoad(Road road)
+    {
+        if (road == null)
+        {
+            return Optional.empty();
+        }
+
+        Intersection from = road.from();
+        Intersection to = road.to();
+
+        List<Road> candidates = outgoing(to);
+        return candidates.stream().filter(r -> r.to().equals(from)).findFirst();
+    }
+
     public List<Road> findAllConnectedRoads(Intersection intersection)
     {
         Set<Road> connected = new HashSet<>();

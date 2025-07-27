@@ -11,7 +11,7 @@ import javafx.scene.shape.Circle;
 import trafficsim.core.model.Intersection;
 import trafficsim.ui.adapter.IntersectionUtil;
 import trafficsim.ui.controller.MainController;
-import trafficsim.ui.controller.MainController.InteractionMode;
+import trafficsim.ui.controller.helpers.InteractionModeManager.Mode;
 
 public abstract class IntersectionView
 {
@@ -19,7 +19,7 @@ public abstract class IntersectionView
     protected Circle highlight;
     protected final List<Node> baseNodes = new ArrayList<>();
 
-    private static final double HIGHLIGHT_RADIUS = 40;
+    private static final double HIGHLIGHT_RADIUS = 25;
 
     public IntersectionView(Intersection model, Consumer<Intersection> editAction, MainController controller)
     {
@@ -50,19 +50,18 @@ public abstract class IntersectionView
     {
         node.setOnMouseEntered(event ->
         {
-            InteractionMode mode = controller.getCurrentMode();
-            if (mode == InteractionMode.NORMAL || mode == InteractionMode.PLACING_ROAD
-                    || mode == InteractionMode.PLACING_CAR)
+            Mode mode = controller.getCurrentMode();
+            if (mode == Mode.NORMAL || mode == Mode.PLACING_ROAD || mode == Mode.PLACING_CAR)
             {
                 highlight.setVisible(true);
-                node.getScene().setCursor(mode == InteractionMode.NORMAL ? Cursor.HAND : Cursor.CROSSHAIR);
+                node.getScene().setCursor(mode == Mode.NORMAL ? Cursor.HAND : Cursor.CROSSHAIR);
             }
         });
 
         node.setOnMouseExited(event ->
         {
             highlight.setVisible(false);
-            if (controller.getCurrentMode() == InteractionMode.NORMAL)
+            if (controller.getCurrentMode() == Mode.NORMAL)
             {
                 node.getScene().setCursor(Cursor.DEFAULT);
             }
@@ -70,7 +69,7 @@ public abstract class IntersectionView
 
         node.setOnMouseClicked(event ->
         {
-            InteractionMode mode = controller.getCurrentMode();
+            Mode mode = controller.getCurrentMode();
             switch (mode) {
             case NORMAL:
                 editAction.accept(model);

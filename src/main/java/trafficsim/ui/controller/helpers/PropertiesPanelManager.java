@@ -1,0 +1,372 @@
+package trafficsim.ui.controller.helpers;
+
+import java.util.Optional;
+
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.Cursor;
+import javafx.scene.control.*;
+
+import trafficsim.core.model.*;
+import trafficsim.ui.adapter.UnitConverter;
+import trafficsim.ui.controller.helpers.InteractionModeManager.Mode;
+
+public class PropertiesPanelManager
+{
+    // UI Controls 
+    private final TitledPane propertiesPane;
+    private final GridPane propertiesGrid;
+    private final Label validationLabel;
+    private final HBox editButtonsBox;
+    private final Button deleteButton;
+
+    private ComboBox<String> intersectionTypeCombo;
+    private Label param1Label, param2Label;
+    private TextField param1Field, param2Field;
+    private Label roadSpeedLabel;
+    private TextField roadSpeedField;
+    private Label carMaxSpeedLabel, carAccelLabel;
+    private TextField carMaxSpeedField, carAccelField;
+    private Label propertiesPlaceholderLabel;
+
+    public PropertiesPanelManager(TitledPane propertiesPane, GridPane propertiesGrid, Label validationLabel,
+            HBox editButtonsBox, Button deleteButton)
+    {
+        this.propertiesPane = propertiesPane;
+        this.propertiesGrid = propertiesGrid;
+        this.validationLabel = validationLabel;
+        this.editButtonsBox = editButtonsBox;
+        this.deleteButton = deleteButton;
+        createPropertyControls();
+        this.propertiesPlaceholderLabel = new Label("Select an 'Add' action or click an item to edit properties.");
+        this.propertiesPlaceholderLabel.setWrapText(true);
+    }
+
+    public void setupForMode(Mode mode, Object selectedItem)
+    {
+        propertiesPane.setVisible(true);
+        propertiesGrid.getChildren().clear();
+        validationLabel.setText("");
+        editButtonsBox.setVisible(mode == Mode.EDITING);
+        editButtonsBox.setManaged(mode == Mode.EDITING);
+
+        int row = 0;
+
+        switch (mode) {
+        case PLACING_INTERSECTION:
+            propertiesGrid.add(new Label("Type:"), 0, row++, 2, 1);
+            propertiesGrid.add(intersectionTypeCombo, 0, row++, 2, 1);
+            propertiesGrid.add(param1Label, 0, row++, 2, 1);
+            propertiesGrid.add(param1Field, 0, row++, 2, 1);
+            propertiesGrid.add(param2Label, 0, row++, 2, 1);
+            propertiesGrid.add(param2Field, 0, row++, 2, 1);
+            intersectionTypeCombo.getSelectionModel().selectFirst();
+            break;
+        case PLACING_ROAD:
+            propertiesGrid.add(roadSpeedLabel, 0, row++, 2, 1);
+            propertiesGrid.add(roadSpeedField, 0, row++, 2, 1);
+            roadSpeedField.setText("35");
+            setValidationMessage("Select the first intersection.", false);
+            break;
+        case PLACING_CAR:
+            propertiesGrid.add(carMaxSpeedLabel, 0, row++, 2, 1);
+            propertiesGrid.add(carMaxSpeedField, 0, row++, 2, 1);
+            propertiesGrid.add(carAccelLabel, 0, row++, 2, 1);
+            propertiesGrid.add(carAccelField, 0, row++, 2, 1);
+            carMaxSpeedField.setText("30");
+            carAccelField.setText("15.0");
+            setValidationMessage("Click an intersection to spawn a car.", false);
+            break;
+        case EDITING:
+            populatePropertiesForEdit(selectedItem);
+            break;
+        case NORMAL:
+            reset();
+            break;
+        }
+    }
+
+    public void reset()
+    {
+        propertiesGrid.getChildren().clear();
+        propertiesGrid.add(propertiesPlaceholderLabel, 0, 0, 2, 1);
+        validationLabel.setText("");
+        editButtonsBox.setVisible(false);
+        editButtonsBox.setManaged(false);
+    }
+
+    public void setValidationMessage(String message, boolean isError)
+    {
+        validationLabel.setText(message);
+        validationLabel.setStyle(isError ? "-fx-text-fill: #ff3333;" : "-fx-text-fill: -fx-text-base-color;");
+    }
+
+    public Optional<Intersection> createIntersectionFromUI(double x, double y)
+    {
+        validationLabel.setText("");
+        try
+        {
+            String type = intersectionTypeCombo.getValue();
+            if ("Traffic Light".equals(type))
+            {
+                double totalTime = Double.parseDouble(param1Field.getText());
+                double yellow = Double.parseDouble(param2Field.getText());
+                if (totalTime <= 0 || yellow <= 0 || yellow >= totalTime)
+                {
+                    validationLabel.setText("Invalid times. Ensure total > yellow > 0.");
+                    return Optional.empty();
+                }
+                return Optional.of(new SignalisedIntersection(x, y, totalTime, yellow));
+            } else if ("Roundabout".equals(type))
+            {
+                double speedMph = Double.parseDouble(param1Field.getText());
+                if (speedMph <= 0)
+                {
+                    validationLabel.setText("Speed must be positive.");
+                    return Optional.empty();
+                }
+                double speedMps = UnitConverter.mphToMps(speedMph);
+                return Optional.of(new Roundabout(x, y, speedMps));
+            }
+        } catch (NumberFormatException e)
+        {
+            validationLabel.setText("Invalid number format in intersection properties.");
+            return Optional.empty();
+        }
+        return Optional.empty();
+    }
+
+    public Optional<Double> validateRoadSpeed()
+    {
+        validationLabel.setText("");
+        try
+        {
+            double speedMph = Double.parseDouble(roadSpeedField.getText());
+            if (speedMph <= 0)
+            {
+                validationLabel.setText("Speed must be positive.");
+                return Optional.empty();
+            }
+            return Optional.of(UnitConverter.mphToMps(speedMph));
+        } catch (NumberFormatException e)
+        {
+            validationLabel.setText("Invalid number for speed.");
+            return Optional.empty();
+        }
+    }
+
+    public Optional<Car> createCarFromUI(RoadNetwork net)
+    {
+        validationLabel.setText("");
+        try
+        {
+            double vMph = Double.parseDouble(carMaxSpeedField.getText());
+            double timeTo60 = Double.parseDouble(carAccelField.getText());
+            if (vMph <= 0 || timeTo60 <= 0)
+            {
+                validationLabel.setText("Car properties must be positive.");
+                return Optional.empty();
+            }
+            double vMps = UnitConverter.mphToMps(vMph);
+            double aMps2 = UnitConverter.MPH_60_IN_MPS / timeTo60;
+            return Optional.of(new Car(net, vMps, aMps2));
+        } catch (NumberFormatException e)
+        {
+            validationLabel.setText("Invalid number format in car properties.");
+            return Optional.empty();
+        }
+    }
+
+    public void populatePropertiesForEdit(Object item)
+    {
+        propertiesGrid.getChildren().clear();
+        deleteButton.setVisible(true);
+        int row = 0;
+
+        param1Label.setVisible(false);
+        param1Field.setVisible(false);
+        param2Label.setVisible(false);
+        param2Field.setVisible(false);
+        roadSpeedLabel.setVisible(false);
+        roadSpeedField.setVisible(false);
+        carMaxSpeedLabel.setVisible(false);
+        carMaxSpeedField.setVisible(false);
+        carAccelLabel.setVisible(false);
+        carAccelField.setVisible(false);
+
+        if (item instanceof SignalisedIntersection)
+        {
+            validationLabel.setText("Editing Signalised Intersection");
+            SignalisedIntersection model = (SignalisedIntersection) item;
+
+            param1Label.setText("Cycle (s):");
+            param1Field.setText(String.format("%.1f", model.getTotalCycleTime()));
+            param1Label.setVisible(true);
+            param1Field.setVisible(true);
+            propertiesGrid.add(param1Label, 0, row++, 2, 1);
+            propertiesGrid.add(param1Field, 0, row++, 2, 1);
+
+            param2Label.setText("Yellow (s):");
+            param2Field.setText(String.format("%.1f", model.getYellowDuration()));
+            param2Label.setVisible(true);
+            param2Field.setVisible(true);
+
+            propertiesGrid.add(param2Label, 0, row++, 2, 1);
+            propertiesGrid.add(param2Field, 0, row++, 2, 1);
+        } else if (item instanceof Roundabout)
+        {
+            validationLabel.setText("Editing Roundabout");
+            Roundabout model = (Roundabout) item;
+            double speedMph = UnitConverter.mpsToMph(model.getSpeedLimit());
+
+            param1Label.setText("Speed (MPH):");
+            param1Field.setText(String.format("%.1f", speedMph));
+            param1Label.setVisible(true);
+            param1Field.setVisible(true);
+
+            propertiesGrid.add(param1Label, 0, row++, 2, 1);
+            propertiesGrid.add(param1Field, 0, row++, 2, 1);
+        } else if (item instanceof Road)
+        {
+            validationLabel.setText("Editing Road");
+            Road model = (Road) item;
+            double speedMph = UnitConverter.mpsToMph(model.speedLimit());
+
+            roadSpeedLabel.setText("Speed (MPH):");
+            roadSpeedField.setText(String.format("%.1f", speedMph));
+            roadSpeedLabel.setVisible(true);
+            roadSpeedField.setVisible(true);
+
+            propertiesGrid.add(roadSpeedLabel, 0, row++, 2, 1);
+            propertiesGrid.add(roadSpeedField, 0, row++, 2, 1);
+        } else if (item instanceof Car)
+        {
+            validationLabel.setText("Editing Car");
+            Car model = (Car) item;
+
+            double maxSpdMph = UnitConverter.mpsToMph(model.getMaxSpeed());
+            carMaxSpeedLabel.setText("Max Spd (MPH):");
+            carMaxSpeedField.setText(String.format("%.1f", maxSpdMph));
+            carMaxSpeedLabel.setVisible(true);
+            carMaxSpeedField.setVisible(true);
+
+            propertiesGrid.add(carMaxSpeedLabel, 0, row++, 2, 1);
+            propertiesGrid.add(carMaxSpeedField, 0, row++, 2, 1);
+
+            double accelMps2 = model.getAcceleration();
+            String timeTo60Text = "";
+            if (accelMps2 > 1e-6)
+            {
+                double timeTo60 = UnitConverter.MPH_60_IN_MPS / accelMps2;
+                timeTo60Text = String.format("%.2f", timeTo60);
+            }
+            carAccelLabel.setText("0-60 Time (s)");
+            carAccelField.setText(timeTo60Text);
+            carAccelLabel.setVisible(true);
+            carAccelField.setVisible(true);
+
+            propertiesGrid.add(carAccelLabel, 0, row++, 2, 1);
+            propertiesGrid.add(carAccelField, 0, row++, 2, 1);
+        }
+    }
+
+    public boolean applyChanges(Object item)
+    {
+        try
+        {
+            if (item instanceof SignalisedIntersection)
+            {
+                SignalisedIntersection model = (SignalisedIntersection) item;
+                double newTotalTime = Double.parseDouble(param1Field.getText());
+                double newYellow = Double.parseDouble(param2Field.getText());
+                if (newTotalTime <= 0 || newYellow <= 0 || newYellow >= newTotalTime)
+                {
+                    validationLabel.setText("Invalid times. Ensure total > yellow > 0.");
+                    return false;
+                }
+                model.setTotalCycleTime(newTotalTime);
+                model.setYellowDuration(newYellow);
+            } else if (item instanceof Roundabout)
+            {
+                Roundabout model = (Roundabout) item;
+                double newSpeedMph = Double.parseDouble(param1Field.getText());
+                if (newSpeedMph <= 0)
+                {
+                    validationLabel.setText("Speed must be positive.");
+                    return false;
+                }
+                model.setSpeedLimit(UnitConverter.mphToMps(newSpeedMph));
+            } else if (item instanceof Road)
+            {
+                Road model = (Road) item;
+                double newSpeedMph = Double.parseDouble(roadSpeedField.getText());
+                if (newSpeedMph <= 0)
+                {
+                    validationLabel.setText("Speed must be positive.");
+                    return false;
+                }
+                model.setSpeedLimit(UnitConverter.mphToMps(newSpeedMph));
+            } else if (item instanceof Car)
+            {
+                Car model = (Car) item;
+                double newMaxSpdMph = Double.parseDouble(carMaxSpeedField.getText());
+                double newTimeTo60 = Double.parseDouble(carAccelField.getText());
+
+                if (newMaxSpdMph <= 0 || newTimeTo60 <= 0)
+                {
+                    validationLabel.setText("Car properties must be positive.");
+                    return false;
+                }
+                model.setMaxSpeed(UnitConverter.mphToMps(newMaxSpdMph));
+                if (newTimeTo60 > 1e-6)
+                {
+                    double newAccelMps2 = UnitConverter.MPH_60_IN_MPS / newTimeTo60;
+                    model.setAcceleration(newAccelMps2);
+                }
+            }
+        } catch (NumberFormatException e)
+        {
+            validationLabel.setText("Invalid number format.");
+            return false;
+        }
+        return true;
+    }
+
+    private void createPropertyControls()
+    {
+        intersectionTypeCombo = new ComboBox<>();
+        intersectionTypeCombo.getItems().setAll("Traffic Light", "Roundabout");
+        intersectionTypeCombo.valueProperty().addListener((obs, oldVal, newVal) -> updateIntersectionFields(newVal));
+        param1Label = new Label();
+        param1Field = new TextField();
+        param2Label = new Label();
+        param2Field = new TextField();
+
+        roadSpeedLabel = new Label("Speed (MPH):");
+        roadSpeedField = new TextField();
+
+        carMaxSpeedLabel = new Label("Max Spd (MPH):");
+        carMaxSpeedField = new TextField();
+        carAccelLabel = new Label("0-60 Time (s)");
+        carAccelField = new TextField();
+    }
+
+    private void updateIntersectionFields(String type)
+    {
+        if ("Traffic Light".equals(type))
+        {
+            param1Label.setText("Cycle (s):");
+            param1Field.setText("20");
+            param2Label.setText("Yellow (s):");
+            param2Field.setText("3");
+            param2Label.setVisible(true);
+            param2Field.setVisible(true);
+        } else if ("Roundabout".equals(type))
+        {
+            param1Label.setText("Speed (MPH):");
+            param1Field.setText("15");
+            param2Label.setVisible(false);
+            param2Field.setVisible(false);
+        }
+    }
+}
