@@ -23,6 +23,8 @@ import trafficsim.ui.controller.helpers.InteractionModeManager.Mode;
 
 public class SimulationRenderer
 {
+    private static final double ROAD_TILE_PX = 32.0;
+
     private final Pane intersectionPane;
     private final Pane roadPane;
     private final Pane carPane;
@@ -36,6 +38,7 @@ public class SimulationRenderer
 
     private final Map<Intersection, IntersectionView> intersectionViewMgrs = new HashMap<>();
     private final Map<Road, Line> roadViews = new HashMap<>();
+    private final Map<Road, List<ImageView>> roadTileViews = new HashMap<>();
 
     private static final double ROAD_ENDPOINT_OFFSET_PX = 25.0;
 
@@ -97,6 +100,12 @@ public class SimulationRenderer
         {
             roadPane.getChildren().remove(view);
         }
+
+        List<ImageView> tiles = roadTileViews.remove(road);
+        if (tiles != null)
+        {
+            roadPane.getChildren().removeAll(tiles);
+        }
     }
 
     public void onRoadAdded(Road road)
@@ -104,6 +113,10 @@ public class SimulationRenderer
         Line line = buildRoadView(road);
         roadViews.put(road, line);
         roadPane.getChildren().add(line);
+
+        List<ImageView> tiles = buildRoadTiles(road);
+        roadTileViews.put(road, tiles);
+        roadPane.getChildren().addAll(tiles);
 
         Intersection destination = road.to();
         if (destination instanceof SignalisedIntersection)
@@ -294,6 +307,62 @@ public class SimulationRenderer
         });
 
         return line;
+    }
+
+    private List<ImageView> buildRoadTiles(Road road)
+    {
+        List<ImageView> tiles = new ArrayList<>();
+        Image tileImg = new Image(
+                Objects.requireNonNull(getClass().getResourceAsStream("/trafficsim/assets/images/road_tile.png")));
+
+        Vec2 from = road.from().position();
+        Vec2 to = road.to().position();
+
+        double fromX = IntersectionUtil.toPx(from.x);
+        double fromY = IntersectionUtil.toPx(from.y);
+        double toX = IntersectionUtil.toPx(to.x);
+        double toY = IntersectionUtil.toPx(to.y);
+
+        double dx = toX - fromX;
+        double dy = toY - fromY;
+        double length = Math.hypot(dx, dy);
+
+        // Offset for intersection buffer
+        double ux = dx / length;
+        double uy = dy / length;
+        double startX = fromX + ROAD_ENDPOINT_OFFSET_PX * ux;
+        double startY = fromY + ROAD_ENDPOINT_OFFSET_PX * uy;
+        double endX = toX - ROAD_ENDPOINT_OFFSET_PX * ux;
+        double endY = toY - ROAD_ENDPOINT_OFFSET_PX * uy;
+        double usableLength = Math.hypot(endX - startX, endY - startY);
+
+        int nTiles = (int) Math.ceil(usableLength / ROAD_TILE_PX);
+
+        double angleRad = Math.atan2(dy, dx);
+        double angleDeg = Math.toDegrees(angleRad);
+
+        for (int i = 0; i < nTiles; ++i)
+        {
+            double t = (i + 0.5) * ROAD_TILE_PX / usableLength;
+            t = Math.min(t, 1.0);
+
+            double px = startX + (endX - startX) * t;
+            double py = startY + (endY - startY) * t;
+
+            ImageView tile = new ImageView(tileImg);
+            tile.setFitWidth(ROAD_TILE_PX);
+            tile.setPreserveRatio(true);
+            tile.setSmooth(true);
+
+            // Center the tile
+            tile.setX(px - ROAD_TILE_PX / 2.0);
+            tile.setY(py - tileImg.getHeight() / 2.0);
+
+            tile.setRotate(angleDeg);
+
+            tiles.add(tile);
+        }
+        return tiles;
     }
 
     public Collection<Intersection> getIntersections()
