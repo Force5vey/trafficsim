@@ -6,15 +6,13 @@ import java.util.Map;
 import java.util.Objects;
 
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
+
 import trafficsim.core.model.Intersection;
-import trafficsim.ui.adapter.IntersectionUtil;
 import trafficsim.ui.controller.MainController;
 import trafficsim.core.model.Road;
 import trafficsim.core.model.SignalGroup;

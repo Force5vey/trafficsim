@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.Cursor;
 import javafx.scene.control.*;
 
 import trafficsim.core.model.*;
