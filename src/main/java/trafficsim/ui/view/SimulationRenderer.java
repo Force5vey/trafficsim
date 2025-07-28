@@ -6,7 +6,10 @@ import java.util.*;
 import java.util.function.Consumer;
 import javafx.animation.AnimationTimer;
 import javafx.scene.Cursor;
+import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
@@ -38,7 +41,7 @@ public class SimulationRenderer
 
     private final Map<Intersection, IntersectionView> intersectionViewMgrs = new HashMap<>();
     private final Map<Road, Line> roadViews = new HashMap<>();
-    private final Map<Road, List<ImageView>> roadTileViews = new HashMap<>();
+    private final Map<Road, Group> roadTileViews = new HashMap<>();
 
     private static final double ROAD_ENDPOINT_OFFSET_PX = 25.0;
 
@@ -101,7 +104,7 @@ public class SimulationRenderer
             roadPane.getChildren().remove(view);
         }
 
-        List<ImageView> tiles = roadTileViews.remove(road);
+        Group tiles = roadTileViews.remove(road);
         if (tiles != null)
         {
             roadPane.getChildren().removeAll(tiles);
@@ -123,7 +126,7 @@ public class SimulationRenderer
 
         if (isCanonical(road))
         {
-            List<ImageView> tiles = buildRoadTiles(road);
+            Group tiles = buildRoadTiles(road);
             roadTileViews.put(road, tiles);
             roadPane.getChildren().addAll(tiles);
         }
@@ -290,38 +293,14 @@ public class SimulationRenderer
         }
 
         line.setStrokeWidth(8);
-        line.setStroke(Color.DIMGRAY);
-
-        line.setOnMouseEntered(e ->
-        {
-            if (controller.getCurrentMode() == Mode.NORMAL)
-            {
-                line.setStroke(Color.ORANGE);
-                roadPane.getScene().setCursor(Cursor.HAND);
-            }
-        });
-        line.setOnMouseExited(e ->
-        {
-            line.setStroke(Color.DIMGRAY);
-            if (controller.getCurrentMode() == Mode.NORMAL)
-            {
-                roadPane.getScene().setCursor(Cursor.DEFAULT);
-            }
-        });
-        line.setOnMouseClicked(e ->
-        {
-            if (controller.getCurrentMode() == Mode.NORMAL)
-            {
-                controller.selectForEditing(road);
-            }
-        });
+        line.setVisible(false);
 
         return line;
     }
 
-    private List<ImageView> buildRoadTiles(Road road)
+    private Group buildRoadTiles(Road road)
     {
-        List<ImageView> tiles = new ArrayList<>();
+        Group tileGroup = new Group();
         Image tileImg = new Image(
                 Objects.requireNonNull(getClass().getResourceAsStream("/trafficsim/assets/images/road_tile.png")));
 
@@ -348,13 +327,13 @@ public class SimulationRenderer
 
         int nTiles = (int) Math.ceil(usableLength / ROAD_TILE_PX);
 
-        double angleRad = Math.atan2(dy, dx);
-        double angleDeg = Math.toDegrees(angleRad);
+        // double angleRad = Math.atan2(dy, dx);
+        double angleDeg = Math.toDegrees(Math.atan2(dy, dx));
 
         for (int i = 0; i < nTiles; ++i)
         {
-            double t = (i + 0.5) * ROAD_TILE_PX / usableLength;
-            t = Math.min(t, 1.0);
+            double t = Math.min(1.0, (i + 0.5) * ROAD_TILE_PX / usableLength);
+            // t = Math.min(t, 1.0);
 
             double px = startX + (endX - startX) * t;
             double py = startY + (endY - startY) * t;
@@ -363,6 +342,7 @@ public class SimulationRenderer
             tile.setFitWidth(ROAD_TILE_PX);
             tile.setPreserveRatio(true);
             tile.setSmooth(true);
+            // tile.setMouseTransparent(true);
 
             double tileWidth = tile.getFitWidth();
             double tileHeight = tile.getImage().getHeight() * (tileWidth / tile.getImage().getWidth());
@@ -370,12 +350,40 @@ public class SimulationRenderer
             // Center the tile
             tile.setX(px - tileWidth / 2.0);
             tile.setY(py - tileHeight / 2.0);
-
             tile.setRotate(angleDeg);
 
-            tiles.add(tile);
+            tileGroup.getChildren().add(tile);
         }
-        return tiles;
+
+        DropShadow glow = new DropShadow(BlurType.GAUSSIAN, Color.ORANGE, 12, 0.7, 0, 0);
+
+        tileGroup.setOnMouseEntered(e ->
+        {
+            if (controller.getCurrentMode() == Mode.NORMAL)
+            {
+                tileGroup.setEffect(glow);
+                roadPane.getScene().setCursor(Cursor.HAND);
+            }
+        });
+
+        tileGroup.setOnMouseExited(e ->
+        {
+            if (controller.getCurrentMode() == Mode.NORMAL)
+            {
+                tileGroup.setEffect(null);
+                roadPane.getScene().setCursor(Cursor.DEFAULT);
+            }
+        });
+
+        tileGroup.setOnMouseClicked(e ->
+        {
+            if (controller.getCurrentMode() == Mode.NORMAL)
+            {
+                controller.selectForEditing(road);
+            }
+        });
+
+        return tileGroup;
     }
 
     public Collection<Intersection> getIntersections()

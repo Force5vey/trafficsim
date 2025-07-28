@@ -159,8 +159,8 @@
             style="-fx-background-color: #3e3e3e;"
             BorderPane.alignment="CENTER">
             <children>
-                <Pane fx:id="intersectionPane" />
                 <Pane fx:id="roadPane" />
+                <Pane fx:id="intersectionPane" />
                 <Pane fx:id="carPane" />
                 <Pane fx:id="lightPane" />
             </children>

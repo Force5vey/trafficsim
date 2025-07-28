@@ -24,6 +24,8 @@ import trafficsim.ui.controller.helpers.SimulationActionHandler;
 import trafficsim.ui.controller.helpers.InteractionModeManager.Mode;
 import trafficsim.ui.view.SimulationRenderer;
 
+import trafficsim.ui.controller.helpers.DefaultLayoutHelper;
+
 public class MainController
 {
     private static final double MIN_PLACEMENT_DISTANCE = 50.0;
@@ -110,6 +112,10 @@ public class MainController
                 this.panelManager = new PropertiesPanelManager(propertiesPane, propertiesGrid, validationLabel,
                         editButtonsBox, deleteButton);
                 this.actionHandler = new SimulationActionHandler(engine, simulationRenderer);
+
+                // --- Initial Road Network Setup --- //
+                DefaultLayoutHelper.setupDefaultLayout(this.actionHandler, this.engine.roadNetwork());
+
                 resetToNormalMode();
             }
         });
