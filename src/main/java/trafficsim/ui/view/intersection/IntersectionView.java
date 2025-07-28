@@ -1,49 +1,34 @@
 package trafficsim.ui.view.intersection;
 
-import javafx.scene.Node;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import javafx.scene.Cursor;
-import javafx.scene.layout.Region;
+import javafx.scene.Node;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
+
 import trafficsim.core.model.Intersection;
-import trafficsim.ui.adapter.IntersectionUtil;
 import trafficsim.ui.controller.MainController;
 import trafficsim.ui.controller.helpers.InteractionModeManager.Mode;
 
 public abstract class IntersectionView
 {
     protected Intersection model;
-    protected Circle highlight;
     protected final List<Node> baseNodes = new ArrayList<>();
 
-    private static final double HIGHLIGHT_RADIUS = 40;
+    private static final DropShadow GLOW_EFFECT = new DropShadow(BlurType.GAUSSIAN, Color.ORANGE, 12, 0.7, 0, 0);
 
     public IntersectionView(Intersection model, Consumer<Intersection> editAction, MainController controller)
     {
         this.model = model;
 
-        this.highlight = new Circle(HIGHLIGHT_RADIUS, Color.TRANSPARENT);
-        this.highlight.setStroke(Color.LIMEGREEN);
-        this.highlight.setStrokeWidth(2);
-        this.highlight.setVisible(false);
-
-        this.highlight.setMouseTransparent(true);
-
-        this.highlight.setCenterX(model.position().x * 10.0);
-        this.highlight.setCenterY(model.position().y * 10.0);
     }
 
     public List<Node> getBaseNodes()
     {
         return baseNodes;
-    }
-
-    public Circle getHighlightNode()
-    {
-        return highlight;
     }
 
     protected void attachMouseHandlers(Node node, Consumer<Intersection> editAction, MainController controller)
@@ -53,14 +38,15 @@ public abstract class IntersectionView
             Mode mode = controller.getCurrentMode();
             if (mode == Mode.NORMAL || mode == Mode.PLACING_ROAD || mode == Mode.PLACING_CAR)
             {
-                highlight.setVisible(true);
-                node.getScene().setCursor(mode == Mode.NORMAL ? Cursor.HAND : Cursor.CROSSHAIR);
+                node.setEffect((GLOW_EFFECT));
+                Cursor cursor = (mode == Mode.NORMAL) ? Cursor.HAND : Cursor.CROSSHAIR;
+                node.getScene().setCursor(cursor);
             }
         });
 
         node.setOnMouseExited(event ->
         {
-            highlight.setVisible(false);
+            node.setEffect(null);
             if (controller.getCurrentMode() == Mode.NORMAL)
             {
                 node.getScene().setCursor(Cursor.DEFAULT);

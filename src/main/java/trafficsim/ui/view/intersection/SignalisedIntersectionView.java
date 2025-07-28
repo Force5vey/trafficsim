@@ -3,12 +3,15 @@ package trafficsim.ui.view.intersection;
 import java.util.function.Consumer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.Node;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import trafficsim.core.model.Intersection;
 import trafficsim.ui.adapter.IntersectionUtil;
@@ -22,7 +25,7 @@ import trafficsim.core.model.Vec2;
 public class SignalisedIntersectionView extends IntersectionView
 {
     private static final double SIGNAL_OFFSET_PX = 45.0;
-    private static final double SIGNAL_RADIUS_PX = 8.0;
+    private static final double SIGNAL_RADIUS_PX = 7.0;
 
     private final Map<Road, Circle> signalViews = new HashMap<>();
     private final SignalisedIntersection sigModel;
@@ -35,16 +38,19 @@ public class SignalisedIntersectionView extends IntersectionView
         double px = model.position().x * 10.0;
         double py = model.position().y * 10.0;
 
-        Rectangle horizontalBar = new Rectangle(50, 20, Color.DARKSLATEGRAY);
-        horizontalBar.setX(px - 25);
-        horizontalBar.setY(py - 10);
+        Image intersectionImage = new Image(Objects
+                .requireNonNull(getClass().getResourceAsStream("/trafficsim/assets/images/intersection_tile.png")));
+        ImageView intersectionView = new ImageView(intersectionImage);
 
-        Rectangle verticalBar = new Rectangle(20, 50, Color.DARKSLATEGRAY);
-        verticalBar.setX(px - 10);
-        verticalBar.setY(py - 25);
+        double imageSize = 140;
+        intersectionView.setFitWidth(imageSize);
+        intersectionView.setFitHeight(imageSize);
+        intersectionView.setX(px - imageSize / 2.0);
+        intersectionView.setY(py - imageSize / 2.0);
+        intersectionView.setPreserveRatio(true);
+        intersectionView.setSmooth(true);
 
-        baseNodes.add(horizontalBar);
-        baseNodes.add(verticalBar);
+        baseNodes.add(intersectionView);
 
         baseNodes.forEach(node -> attachMouseHandlers(node, editAction, controller));
     }

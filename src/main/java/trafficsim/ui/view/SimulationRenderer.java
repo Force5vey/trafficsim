@@ -26,7 +26,7 @@ import trafficsim.ui.controller.helpers.InteractionModeManager.Mode;
 
 public class SimulationRenderer
 {
-    private static final double ROAD_TILE_PX = 32.0;
+    private static final double ROAD_TILE_PX = 48.0;
 
     private final Pane intersectionPane;
     private final Pane roadPane;
@@ -71,8 +71,6 @@ public class SimulationRenderer
         intersectionViewMgrs.put(intersection, viewMgr);
 
         intersectionPane.getChildren().addAll(viewMgr.getBaseNodes());
-
-        lightPane.getChildren().add(viewMgr.getHighlightNode());
     }
 
     public IntersectionView getIntersectionView(Intersection model)
@@ -86,8 +84,6 @@ public class SimulationRenderer
         if (viewMgr != null)
         {
             intersectionPane.getChildren().removeAll(viewMgr.getBaseNodes());
-
-            lightPane.getChildren().remove(viewMgr.getHighlightNode());
 
             if (viewMgr instanceof SignalisedIntersectionView)
             {

@@ -23,13 +23,15 @@ import trafficsim.ui.controller.helpers.PropertiesPanelManager;
 import trafficsim.ui.controller.helpers.SimulationActionHandler;
 import trafficsim.ui.controller.helpers.InteractionModeManager.Mode;
 import trafficsim.ui.view.SimulationRenderer;
-
+import trafficsim.ui.controller.helpers.BackgroundHelper;
 import trafficsim.ui.controller.helpers.DefaultLayoutHelper;
 
 public class MainController
 {
     private static final double MIN_PLACEMENT_DISTANCE = 50.0;
 
+    @FXML
+    private Pane backgroundPane;
     @FXML
     private Pane simulationStackPane;
     @FXML
@@ -84,6 +86,8 @@ public class MainController
     @FXML
     public void initialize()
     {
+        BackgroundHelper.setupBackground(backgroundPane);
+
         this.engine = new SimulationEngine();
         this.simulationRenderer = new SimulationRenderer(intersectionPane, roadPane, carPane, lightPane, engine, this);
 

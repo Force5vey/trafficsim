@@ -1,10 +1,11 @@
 package trafficsim.ui.view.intersection;
 
+import java.util.Objects;
 import java.util.function.Consumer;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+
 import trafficsim.core.model.Intersection;
-import trafficsim.ui.adapter.IntersectionUtil;
 import trafficsim.ui.controller.MainController;
 
 public class RoundaboutView extends IntersectionView
@@ -16,13 +17,20 @@ public class RoundaboutView extends IntersectionView
         double px = model.position().x * 10.0;
         double py = model.position().y * 10.0;
 
-        Circle roundaboutShape = new Circle(45, Color.DARKGRAY);
-        roundaboutShape.setStroke(Color.WHITE);
-        roundaboutShape.setCenterX(px);
-        roundaboutShape.setCenterY(py);
+        Image roundaboutImage = new Image(Objects
+                .requireNonNull(getClass().getResourceAsStream("/trafficsim/assets/images/roundabout_tile.png")));
+        ImageView roundaboutView = new ImageView(roundaboutImage);
 
-        baseNodes.add(roundaboutShape);
-        attachMouseHandlers(roundaboutShape, editAction, controller);
+        double imageSize = 140.0;
+        roundaboutView.setFitWidth(imageSize);
+        roundaboutView.setFitHeight(imageSize);
+        roundaboutView.setX(px - imageSize / 2.0);
+        roundaboutView.setY(py - imageSize / 2.0);
+        roundaboutView.setPreserveRatio(true);
+        roundaboutView.setSmooth(true);
+
+        baseNodes.add(roundaboutView);
+        attachMouseHandlers(roundaboutView, editAction, controller);
     }
 
     @Override
