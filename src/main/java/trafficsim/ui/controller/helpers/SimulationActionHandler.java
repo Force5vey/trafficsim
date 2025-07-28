@@ -3,6 +3,7 @@ package trafficsim.ui.controller.helpers;
 import java.util.List;
 import java.util.Optional;
 
+import trafficsim.core.events.*;
 import trafficsim.core.model.*;
 import trafficsim.core.sim.SimulationEngine;
 import trafficsim.ui.view.SimulationRenderer;
@@ -38,33 +39,39 @@ public class SimulationActionHandler
 
     public void addCar(Car car, Intersection spawnPoint)
     {
-        List<Road> outs = engine.roadNetwork().outgoing(spawnPoint);
-        if (outs.isEmpty())
-        {
-            return;
-        }
-        engine.addVehicle(car, outs.get(0), 0.0);
+        engine.postEvent(new AddCarEvent(car, spawnPoint));
         renderer.onCarAdded(car);
     }
 
     public void deleteItem(Object item)
     {
+        engine.postEvent(new DeleteItemEvent(item));
+
         if (item instanceof Intersection)
         {
-            deleteIntersection((Intersection) item);
+            Intersection i = (Intersection) item;
+            List<Road> affectedRoads = engine.roadNetwork().findAllConnectedRoads(i);
+            renderer.removeIntersection(i);
+            for (Road road : affectedRoads)
+            {
+                renderer.removeRoad(road);
+            }
         } else if (item instanceof Road)
         {
             Road roadToDelete = (Road) item;
             Optional<Road> oppositeRoadOpt = engine.roadNetwork().findOppositeRoad(roadToDelete);
-
-            removeRoadAndItsView(roadToDelete);
-            oppositeRoadOpt.ifPresent(this::removeRoadAndItsView);
-
+            renderer.removeRoad(roadToDelete);
+            oppositeRoadOpt.ifPresent(renderer::removeRoad);
         } else if (item instanceof Car)
         {
-            engine.removeVehicle((Car) item);
             renderer.removeCar((Car) item);
         }
+    }
+
+    public void clearAll()
+    {
+        engine.postEvent(ClearAllEvent.INSTANCE);
+        renderer.clearAll();
     }
 
     private void removeRoadAndItsView(Road road)
@@ -86,9 +93,4 @@ public class SimulationActionHandler
         }
     }
 
-    public void clearAll()
-    {
-        engine.clearAll();
-        renderer.clearAll();
-    }
 }

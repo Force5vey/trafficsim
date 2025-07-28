@@ -14,7 +14,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-
+import trafficsim.core.events.EngineControlEvent;
+import trafficsim.core.events.EngineControlEvent.ControlType;
 import trafficsim.core.model.Intersection;
 import trafficsim.core.sim.SimulationEngine;
 import trafficsim.ui.adapter.IntersectionUtil;
@@ -318,7 +319,7 @@ public class MainController
     @FXML
     private void handleStart()
     {
-        engine.start();
+        engine.postEvent(new EngineControlEvent(ControlType.START));
         isSimStopped = false;
         updateStopButtonState();
     }
@@ -326,7 +327,7 @@ public class MainController
     @FXML
     private void handlePause()
     {
-        engine.pause();
+        engine.postEvent(new EngineControlEvent(ControlType.PAUSE));
     }
 
     @FXML
@@ -337,9 +338,17 @@ public class MainController
             actionHandler.clearAll();
         } else
         {
-            engine.stop();
+            engine.postEvent(new EngineControlEvent(ControlType.STOP));
             isSimStopped = true;
             updateStopButtonState();
+        }
+    }
+
+    public void shutdownEngine()
+    {
+        if (engine != null)
+        {
+            engine.shutdown();
         }
     }
 }
