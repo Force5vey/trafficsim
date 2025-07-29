@@ -9,6 +9,8 @@ import trafficsim.ui.adapter.IntersectionUtil;
 public class Car implements Updatable
 {
     private static final double STOP_LINE_OFFSET_METERS = 7.0;
+    private static final double CAR_LENGTH_METERS = 5.0;
+    private static final double SAFE_FOLLOWING_GAP_METERS = 3.0;
 
     private volatile double maxSpeed;
     private volatile double acceleration;
@@ -27,6 +29,7 @@ public class Car implements Updatable
 
     // internal state
     private double targetV;
+    private List<Updatable> allSimObjects;
 
     public Car(RoadNetwork net, double maxSpeed, double acceleration)
     {
@@ -162,17 +165,78 @@ public class Car implements Updatable
 
     }
 
+    public void setSimulationObjects(List<Updatable> objects)
+    {
+        this.allSimObjects = objects;
+    }
+
+    private Optional<Car> findLeader()
+    {
+        if (allSimObjects == null || road == null)
+        {
+            return Optional.empty();
+        }
+
+        Car leader = null;
+        double minDistance = Double.POSITIVE_INFINITY;
+
+        for (Updatable obj : allSimObjects)
+        {
+            if (obj instanceof Car && obj != this)
+            {
+                Car otherCar = (Car) obj;
+
+                synchronized (otherCar.stateLock)
+                {
+                    if (otherCar.road == this.road && otherCar.s > this.s)
+                    {
+                        double distance = otherCar.s - this.s;
+                        if (distance < minDistance)
+                        {
+                            minDistance = distance;
+                            leader = otherCar;
+                        }
+                    }
+                }
+            }
+        }
+        return Optional.ofNullable(leader);
+    }
+
     private void decideTargetSpeed()
     {
+        double effectiveSpeedLimit = Math.min(maxSpeed, road.speedLimit());
+        double closestObstacleDistance = Double.POSITIVE_INFINITY;
+
         if (shouldStopForLight())
         {
             double stopLine = Math.max(0, road.length() - STOP_LINE_OFFSET_METERS);
-            double remaining = stopLine - s;
-            double safeSpeed = Math.sqrt(2.0 * acceleration * Math.max(0, remaining));
-            targetV = Math.min(safeSpeed, road.speedLimit());
+            closestObstacleDistance = Math.max(0, stopLine - s);
+        }
+
+        Optional<Car> leaderOpt = findLeader();
+        if (leaderOpt.isPresent())
+        {
+            Car leader = leaderOpt.get();
+            double leaderS;
+
+            synchronized (leader.stateLock)
+            {
+                leaderS = leader.s;
+            }
+
+            double distanceToLeader = (leaderS - this.s) - CAR_LENGTH_METERS - SAFE_FOLLOWING_GAP_METERS;
+
+            closestObstacleDistance = Math.min(closestObstacleDistance, Math.max(0, distanceToLeader));
+        }
+
+        if (closestObstacleDistance != Double.POSITIVE_INFINITY)
+        {
+            double safeSpeed = Math.sqrt(2.0 * acceleration * closestObstacleDistance);
+            targetV = Math.min(effectiveSpeedLimit, safeSpeed);
         } else
         {
-            targetV = Math.min(maxSpeed, road.speedLimit());
+            targetV = effectiveSpeedLimit;
         }
     }
 

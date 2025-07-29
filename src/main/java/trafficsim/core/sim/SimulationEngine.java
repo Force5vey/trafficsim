@@ -136,6 +136,10 @@ public final class SimulationEngine
         } else if (event instanceof AddCarEvent)
         {
             AddCarEvent cmd = (AddCarEvent) event;
+
+            Car car = cmd.getCar();
+            car.setSimulationObjects(this.updatables);
+
             List<Road> outs = roadNet.outgoing(cmd.getSpawnPoint());
             if (!outs.isEmpty())
             {
