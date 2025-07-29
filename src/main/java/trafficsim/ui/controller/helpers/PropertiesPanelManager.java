@@ -29,6 +29,7 @@ public class PropertiesPanelManager
     private Label carMaxSpeedLabel, carAccelLabel;
     private TextField carMaxSpeedField, carAccelField;
     private Label propertiesPlaceholderLabel;
+    private CheckBox carShowBubbleCheck;
 
     public PropertiesPanelManager(TitledPane propertiesPane, GridPane propertiesGrid, Label validationLabel,
             HBox editButtonsBox, Button deleteButton)
@@ -268,6 +269,8 @@ public class PropertiesPanelManager
 
             propertiesGrid.add(carAccelLabel, 0, row++, 2, 1);
             propertiesGrid.add(carAccelField, 0, row++, 2, 1);
+            carShowBubbleCheck.setSelected(((Car) item).getShowDataBubble());
+            propertiesGrid.add(carShowBubbleCheck, 0, row++, 2, 1);
         }
     }
 
@@ -334,6 +337,9 @@ public class PropertiesPanelManager
                     setValidationMessage("Car properties must be positive.", true);
                     return Optional.empty();
                 }
+
+                boolean showBubble = carShowBubbleCheck.isSelected();
+
                 Consumer<Car> updater = c ->
                 {
                     c.setMaxSpeed(UnitConverter.mphToMps(newMaxSpdMph));
@@ -342,6 +348,7 @@ public class PropertiesPanelManager
                         double newAccelMps2 = UnitConverter.MPH_60_IN_MPS / newTimeTo60;
                         c.setAcceleration(newAccelMps2);
                     }
+                    c.setShowDataBubble(showBubble);
                 };
                 return Optional.of(new UpdateItemEvent<>(model, updater));
             }
@@ -370,6 +377,8 @@ public class PropertiesPanelManager
         carMaxSpeedField = new TextField();
         carAccelLabel = new Label("0-60 Time (s)");
         carAccelField = new TextField();
+
+        carShowBubbleCheck = new CheckBox("Show Data Bubble");
     }
 
     private void updateIntersectionFields(String type)

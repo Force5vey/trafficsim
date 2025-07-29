@@ -14,6 +14,7 @@ public class Car implements Updatable
     private volatile double acceleration;
     private final RoadNetwork net;
     private final Random rng = new Random();
+    private volatile boolean showDataBubble = true;
 
     private final Object stateLock = new Object();
 
@@ -40,6 +41,14 @@ public class Car implements Updatable
     public Car(RoadNetwork net)
     {
         this(net, 35.0, 2.0);
+    }
+
+    public double getVelocity()
+    {
+        synchronized (stateLock)
+        {
+            return this.v;
+        }
     }
 
     public void attachTo(Road road, double offsetMeters)
@@ -261,5 +270,15 @@ public class Car implements Updatable
     public void setAcceleration(double a)
     {
         this.acceleration = Math.max(0, a);
+    }
+
+    public boolean getShowDataBubble()
+    {
+        return showDataBubble;
+    }
+
+    public void setShowDataBubble(boolean show)
+    {
+        this.showDataBubble = show;
     }
 }

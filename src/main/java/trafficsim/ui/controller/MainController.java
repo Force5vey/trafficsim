@@ -5,6 +5,7 @@ package trafficsim.ui.controller;
 import java.util.Optional;
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
+
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -14,6 +15,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.control.ToggleButton;
+
 import trafficsim.core.events.EngineControlEvent;
 import trafficsim.core.events.EngineControlEvent.ControlType;
 import trafficsim.core.events.ModelCommandEvent;
@@ -74,6 +77,8 @@ public class MainController
     private Button deleteButton;
     @FXML
     private Button cancelEditButton;
+    @FXML
+    private ToggleButton toggleBubblesButton;
 
     private SimulationEngine engine;
     private SimulationRenderer simulationRenderer;
@@ -178,6 +183,14 @@ public class MainController
     private void handleAddCarRequest()
     {
         setMode(getCurrentMode() == Mode.PLACING_CAR ? Mode.NORMAL : Mode.PLACING_CAR);
+    }
+
+    @FXML
+    private void handleToggleBubbles()
+    {
+        boolean show = toggleBubblesButton.isSelected();
+        simulationRenderer.setAllBubblesVisible(show);
+        toggleBubblesButton.setText(show ? "Hide Bubbles" : "Show Bubbles");
     }
 
     private void handlePaneClick(MouseEvent event)

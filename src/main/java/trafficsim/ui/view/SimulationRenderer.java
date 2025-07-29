@@ -15,6 +15,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
+import javafx.scene.shape.Polygon;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 
 import trafficsim.core.model.*;
 import trafficsim.core.sim.SimulationEngine;
@@ -41,6 +45,11 @@ public class SimulationRenderer
     private final Map<Intersection, IntersectionView> intersectionViewMgrs = new HashMap<>();
     private final Map<Road, Line> roadViews = new HashMap<>();
     private final Map<Road, Group> roadTileViews = new HashMap<>();
+
+    private final Map<Car, Group> carDataBubbleViews = new HashMap<>();
+    private final Map<Car, Text> carDataTexts = new HashMap<>();
+
+    private boolean areBubblesGloballyVisible = true;
 
     private static final double ROAD_ENDPOINT_OFFSET_PX = 25.0;
 
@@ -145,6 +154,11 @@ public class SimulationRenderer
         carViews.put(car, view);
         carAdapters.put(car, new CarAdapter(car));
         carPane.getChildren().add(view);
+
+        Group bubble = buildCarDataBubble(car);
+        carDataBubbleViews.put(car, bubble);
+        carPane.getChildren().add(bubble);
+        bubble.setVisible(areBubblesGloballyVisible && car.getShowDataBubble());
     }
 
     public void removeCar(Car car)
@@ -155,6 +169,13 @@ public class SimulationRenderer
             carPane.getChildren().remove(view);
         }
         carAdapters.remove(car);
+
+        Group bubble = carDataBubbleViews.remove(car);
+        if (bubble != null)
+        {
+            carPane.getChildren().remove(bubble);
+        }
+        carDataTexts.remove(car);
     }
 
     public void clearAll()
@@ -163,6 +184,8 @@ public class SimulationRenderer
         carAdapters.clear();
         intersectionViewMgrs.clear();
         roadViews.clear();
+        carDataBubbleViews.clear();
+        carDataTexts.clear();
 
         intersectionPane.getChildren().clear();
         roadPane.getChildren().clear();
@@ -195,11 +218,68 @@ public class SimulationRenderer
 
             double angleDeg = Math.toDegrees(car.headingRad());
             view.setRotate(angleDeg);
+
+            // Data Bubble
+            Group bubble = carDataBubbleViews.get(car);
+            Text dataText = carDataTexts.get(car);
+            if (bubble == null || dataText == null)
+            {
+                continue;
+            }
+
+            bubble.setVisible(areBubblesGloballyVisible && car.getShowDataBubble());
+
+            double bubbleHeight = 50;
+            double pointerHeight = 10;
+            bubble.setLayoutX(centerX - bubble.getBoundsInLocal().getWidth() / 2.0);
+            bubble.setLayoutY(centerY - fitH / 2.0 - bubbleHeight - pointerHeight);
+
+            Vec2 pos = car.worldPos();
+            double currentSpeedMps = car.getVelocity();
+            double currentSpeedMph = UnitConverter.mpsToMph(currentSpeedMps);
+            dataText.setText(String.format("X: %.1f, Y: %.1f\nSpd: %2.0f mph", pos.x, pos.y, currentSpeedMph));
         }
 
         for (IntersectionView viewMgr : intersectionViewMgrs.values())
         {
             viewMgr.updateView();
+        }
+    }
+
+    private Group buildCarDataBubble(Car car)
+    {
+        Rectangle bubbleBg = new Rectangle(120, 50);
+        bubbleBg.setArcWidth(20);
+        bubbleBg.setArcHeight(20);
+        bubbleBg.setFill(Color.rgb(0, 0, 0, 0.6));
+        bubbleBg.setStroke(Color.WHITE);
+        bubbleBg.setStrokeWidth(1.5);
+
+        Polygon pointer = new Polygon();
+        pointer.getPoints().addAll(50.0, 50.0, 70.0, 50.0, 60.0, 60.0);
+
+        pointer.setFill(Color.rgb(0, 0, 0, 0.7));
+        pointer.setStroke(Color.WHITE);
+        pointer.setStrokeWidth(1.5);
+
+        Text dataText = new Text("X: 0, Y: 0\nSpd: 0 mph");
+        dataText.setFill(Color.WHITE);
+        dataText.setTextAlignment(TextAlignment.CENTER);
+        dataText.setLayoutX(10);
+        dataText.setLayoutY(20);
+        carDataTexts.put(car, dataText);
+
+        return new Group(bubbleBg, pointer, dataText);
+    }
+
+    public void setAllBubblesVisible(boolean visible)
+    {
+        this.areBubblesGloballyVisible = visible;
+        for (Map.Entry<Car, Group> entry : carDataBubbleViews.entrySet())
+        {
+            Car car = entry.getKey();
+            Group bubble = entry.getValue();
+            bubble.setVisible(visible && car.getShowDataBubble());
         }
     }
 

@@ -5,6 +5,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
@@ -90,6 +91,12 @@
                     maxWidth="1.7976931348623157E308"
                     onAction="#handleAddCarRequest"
                     text="Add Car" />
+                <ToggleButton fx:id="toggleBubblesButton"
+                    maxWidth="1.7976931348623157E308"
+                    mnemonicParsing="false"
+                    onAction="#handleToggleBubbles"
+                    selected="true"
+                    text="Hide Bubbles" />
                 <TitledPane
                     fx:id="propertiesPane"
                     collapsible="false"
