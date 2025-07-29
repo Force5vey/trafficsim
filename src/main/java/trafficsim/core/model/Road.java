@@ -4,7 +4,7 @@ public final class Road implements Updatable
 {
     private final Intersection from, to;
     private final double length;
-    private double speedLimit;
+    private volatile double speedLimit;
 
     public Road(Intersection from, Intersection to, double length, double speedLimit)
     {

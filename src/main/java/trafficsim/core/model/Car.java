@@ -10,19 +10,22 @@ public class Car implements Updatable
 {
     private static final double STOP_LINE_OFFSET_METERS = 7.0;
 
-    private double maxSpeed;
-    private double acceleration;
+    private volatile double maxSpeed;
+    private volatile double acceleration;
     private final RoadNetwork net;
     private final Random rng = new Random();
 
-    // Dynamic state
+    private final Object stateLock = new Object();
+
+    // Dynamic state - guarded by stateLock
     private Road road;
     private double s;
     private double v;
-    private double targetV;
-
     private Road initialRoad;
     private double initialS;
+
+    // internal state
+    private double targetV;
 
     public Car(RoadNetwork net, double maxSpeed, double acceleration)
     {
@@ -90,9 +93,12 @@ public class Car implements Updatable
     @Override
     public void update(double deltaTime)
     {
-        if (road == null)
+        synchronized (stateLock)
         {
-            return;
+            if (road == null)
+            {
+                return;
+            }
         }
 
         decideTargetSpeed();
@@ -192,7 +198,16 @@ public class Car implements Updatable
 
     public Vec2 worldPos()
     {
-        if (road == null)
+        Road localRoad;
+        double localS;
+
+        synchronized (stateLock)
+        {
+            localRoad = this.road;
+            localS = this.s;
+        }
+
+        if (localRoad == null)
         {
             return new Vec2(0, 0);
         }

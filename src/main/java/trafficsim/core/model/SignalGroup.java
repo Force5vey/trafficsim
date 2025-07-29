@@ -5,7 +5,7 @@ import java.util.UUID;
 public final class SignalGroup
 {
     private final UUID id = UUID.randomUUID();
-    private TrafficLightState state = TrafficLightState.RED;
+    private volatile TrafficLightState state = TrafficLightState.RED;
 
     public UUID id()
     {

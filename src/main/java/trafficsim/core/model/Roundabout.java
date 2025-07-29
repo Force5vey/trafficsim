@@ -3,7 +3,7 @@ package trafficsim.core.model;
 public final class Roundabout implements Intersection
 {
     private final Vec2 position;
-    private double speedLimit;
+    private volatile double speedLimit;
 
     public Roundabout(double x, double y, double speedLimit)
     {

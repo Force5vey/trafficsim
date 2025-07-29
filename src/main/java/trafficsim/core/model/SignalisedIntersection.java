@@ -10,8 +10,8 @@ public final class SignalisedIntersection implements Intersection
 {
     private final Vec2 position;
 
-    private double totalCycleTime;
-    private double yellowDuration;
+    private volatile double totalCycleTime;
+    private volatile double yellowDuration;
     private double greenDuration;
 
     private final Map<Road, SignalGroup> signalMap = new HashMap<>();
