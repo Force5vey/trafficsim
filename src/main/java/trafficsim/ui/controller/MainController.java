@@ -16,6 +16,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import trafficsim.core.events.EngineControlEvent;
 import trafficsim.core.events.EngineControlEvent.ControlType;
+import trafficsim.core.events.ModelCommandEvent;
 import trafficsim.core.model.Intersection;
 import trafficsim.core.sim.SimulationEngine;
 import trafficsim.ui.adapter.IntersectionUtil;
@@ -263,10 +264,13 @@ public class MainController
     @FXML
     private void handleApplyEdit()
     {
-        if (panelManager.applyChanges(selectedForEdit))
+        Optional<ModelCommandEvent> updateEvent = panelManager.createUpdateEvent(selectedForEdit);
+
+        updateEvent.ifPresent(event ->
         {
+            engine.postEvent(event);
             resetToNormalMode();
-        }
+        });
     }
 
     @FXML

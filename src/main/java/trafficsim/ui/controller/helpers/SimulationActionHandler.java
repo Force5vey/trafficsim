@@ -21,7 +21,7 @@ public class SimulationActionHandler
 
     public void addIntersection(Intersection intersection)
     {
-        engine.addIntersection(intersection);
+        engine.postEvent(new AddIntersectionEvent((intersection)));
         renderer.onIntersectionAdded(intersection);
     }
 
@@ -29,11 +29,11 @@ public class SimulationActionHandler
     {
         double length = from.position().distanceTo(to.position());
         Road road1 = new Road(from, to, length, speedMps);
-        engine.addRoad(road1);
+        engine.postEvent(new AddRoadEvent(road1));
         renderer.onRoadAdded(road1);
 
         Road road2 = new Road(to, from, length, speedMps);
-        engine.addRoad(road2);
+        engine.postEvent(new AddRoadEvent(road2));
         renderer.onRoadAdded(road2);
     }
 
@@ -73,24 +73,4 @@ public class SimulationActionHandler
         engine.postEvent(ClearAllEvent.INSTANCE);
         renderer.clearAll();
     }
-
-    private void removeRoadAndItsView(Road road)
-    {
-        if (road != null)
-        {
-            engine.removeRoad(road);
-            renderer.removeRoad(road);
-        }
-    }
-
-    private void deleteIntersection(Intersection intersection)
-    {
-        List<Road> affectedRoads = engine.removeIntersection(intersection);
-        renderer.removeIntersection(intersection);
-        for (Road road : affectedRoads)
-        {
-            renderer.removeRoad(road);
-        }
-    }
-
 }

@@ -162,6 +162,10 @@ public final class SimulationEngine
             {
                 updatables.remove(item);
             }
+        } else if (event instanceof AppliableCommand)
+        {
+            ((AppliableCommand) event).apply();
+
         } else if (event instanceof ClearAllEvent)
         {
             clearAll();
@@ -170,50 +174,26 @@ public final class SimulationEngine
 
     public void shutdown()
     {
-        if (exec != null)
+        if (exec != null && !exec.isShutdown())
         {
-            exec.shutdownNow();
+            exec.shutdown();
+            try
+            {
+                if (!exec.awaitTermination(1, TimeUnit.SECONDS))
+                {
+                    exec.shutdownNow();
+                }
+            } catch (InterruptedException e)
+            {
+                exec.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
         }
-    }
-
-    public void addIntersection(Intersection intersection)
-    {
-        updatables.add(intersection);
-    }
-
-    public List<Road> removeIntersection(Intersection intersection)
-    {
-        List<Road> roadsToRemove = roadNet.findAllConnectedRoads(intersection);
-        for (Road road : roadsToRemove)
-        {
-            removeRoad(road);
-        }
-        updatables.remove(intersection);
-        roadNet.removeIntersection(intersection);
-
-        return roadsToRemove;
     }
 
     public RoadNetwork roadNetwork()
     {
         return roadNet;
-    }
-
-    public void addRoad(Road road)
-    {
-        updatables.add(road);
-        roadNet.add(road);
-    }
-
-    public void removeRoad(Road road)
-    {
-        updatables.remove(road);
-        roadNet.removeRoad(road);
-    }
-
-    public void removeVehicle(Car car)
-    {
-        updatables.remove(car);
     }
 
     public double simulationTimeSeconds()

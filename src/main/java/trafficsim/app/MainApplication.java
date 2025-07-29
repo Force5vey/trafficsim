@@ -9,9 +9,12 @@ import javafx.stage.Stage;
 
 import jfxtras.styles.jmetro.JMetro;
 import jfxtras.styles.jmetro.Style;
+import trafficsim.ui.controller.MainController;
 
 public class MainApplication extends Application
 {
+    private MainController controller;
+
     // private static Scene scene;
     @Override
     public void start(Stage stage) throws IOException
@@ -19,6 +22,8 @@ public class MainApplication extends Application
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("/trafficsim/view/MainView.fxml"));
 
         Parent root = fxmlLoader.load();
+
+        this.controller = fxmlLoader.getController();
 
         Scene scene = new Scene(root, 1280, 720);
 
@@ -28,6 +33,15 @@ public class MainApplication extends Application
         stage.setTitle("Traffic Sim");
         stage.setScene(scene);
         stage.show();
+    }
+
+    @Override
+    public void stop()
+    {
+        if (controller != null)
+        {
+            controller.shutdownEngine();
+        }
     }
 
     public static void main(String[] args)

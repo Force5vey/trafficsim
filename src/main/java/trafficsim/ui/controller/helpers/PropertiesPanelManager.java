@@ -1,11 +1,13 @@
 package trafficsim.ui.controller.helpers;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.control.*;
-
+import trafficsim.core.events.ModelCommandEvent;
+import trafficsim.core.events.UpdateItemEvent;
 import trafficsim.core.model.*;
 import trafficsim.ui.adapter.UnitConverter;
 import trafficsim.ui.controller.helpers.InteractionModeManager.Mode;
@@ -269,7 +271,15 @@ public class PropertiesPanelManager
         }
     }
 
-    public boolean applyChanges(Object item)
+    /**
+     * Validates the UI fields for the selected item and, if valid, creates a
+     * thread-safe event containing the update logic.
+     *
+     * @param item The model object selected for editing.
+     * @return An Optional containing the event if validation succeeds, otherwise
+     *         empty.
+     */
+    public Optional<ModelCommandEvent> createUpdateEvent(Object item)
     {
         try
         {
@@ -280,55 +290,67 @@ public class PropertiesPanelManager
                 double newYellow = Double.parseDouble(param2Field.getText());
                 if (newTotalTime <= 0 || newYellow <= 0 || newYellow >= newTotalTime)
                 {
-                    validationLabel.setText("Invalid times. Ensure total > yellow > 0.");
-                    return false;
+                    setValidationMessage("Invalid times. Ensure total > yellow > 0.", true);
+                    return Optional.empty();
                 }
-                model.setTotalCycleTime(newTotalTime);
-                model.setYellowDuration(newYellow);
+                Consumer<SignalisedIntersection> updater = m ->
+                {
+                    m.setTotalCycleTime(newTotalTime);
+                    m.setYellowDuration(newYellow);
+                };
+                return Optional.of(new UpdateItemEvent<>(model, updater));
+
             } else if (item instanceof Roundabout)
             {
                 Roundabout model = (Roundabout) item;
                 double newSpeedMph = Double.parseDouble(param1Field.getText());
                 if (newSpeedMph <= 0)
                 {
-                    validationLabel.setText("Speed must be positive.");
-                    return false;
+                    setValidationMessage("Speed must be positive.", true);
+                    return Optional.empty();
                 }
-                model.setSpeedLimit(UnitConverter.mphToMps(newSpeedMph));
+                Consumer<Roundabout> updater = m -> m.setSpeedLimit(UnitConverter.mphToMps(newSpeedMph));
+                return Optional.of(new UpdateItemEvent<>(model, updater));
+
             } else if (item instanceof Road)
             {
                 Road model = (Road) item;
                 double newSpeedMph = Double.parseDouble(roadSpeedField.getText());
                 if (newSpeedMph <= 0)
                 {
-                    validationLabel.setText("Speed must be positive.");
-                    return false;
+                    setValidationMessage("Speed must be positive.", true);
+                    return Optional.empty();
                 }
-                model.setSpeedLimit(UnitConverter.mphToMps(newSpeedMph));
+                Consumer<Road> updater = m -> m.setSpeedLimit(UnitConverter.mphToMps(newSpeedMph));
+                return Optional.of(new UpdateItemEvent<>(model, updater));
+
             } else if (item instanceof Car)
             {
                 Car model = (Car) item;
                 double newMaxSpdMph = Double.parseDouble(carMaxSpeedField.getText());
                 double newTimeTo60 = Double.parseDouble(carAccelField.getText());
-
                 if (newMaxSpdMph <= 0 || newTimeTo60 <= 0)
                 {
-                    validationLabel.setText("Car properties must be positive.");
-                    return false;
+                    setValidationMessage("Car properties must be positive.", true);
+                    return Optional.empty();
                 }
-                model.setMaxSpeed(UnitConverter.mphToMps(newMaxSpdMph));
-                if (newTimeTo60 > 1e-6)
+                Consumer<Car> updater = c ->
                 {
-                    double newAccelMps2 = UnitConverter.MPH_60_IN_MPS / newTimeTo60;
-                    model.setAcceleration(newAccelMps2);
-                }
+                    c.setMaxSpeed(UnitConverter.mphToMps(newMaxSpdMph));
+                    if (newTimeTo60 > 1e-6)
+                    {
+                        double newAccelMps2 = UnitConverter.MPH_60_IN_MPS / newTimeTo60;
+                        c.setAcceleration(newAccelMps2);
+                    }
+                };
+                return Optional.of(new UpdateItemEvent<>(model, updater));
             }
         } catch (NumberFormatException e)
         {
-            validationLabel.setText("Invalid number format.");
-            return false;
+            setValidationMessage("Invalid number format.", true);
+            return Optional.empty();
         }
-        return true;
+        return Optional.empty();
     }
 
     private void createPropertyControls()
