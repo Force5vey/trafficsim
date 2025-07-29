@@ -45,27 +45,41 @@ public class SimulationActionHandler
 
     public void deleteItem(Object item)
     {
-        engine.postEvent(new DeleteItemEvent(item));
+        final Runnable uiUpdateCallback;
 
         if (item instanceof Intersection)
         {
             Intersection i = (Intersection) item;
             List<Road> affectedRoads = engine.roadNetwork().findAllConnectedRoads(i);
-            renderer.removeIntersection(i);
-            for (Road road : affectedRoads)
+            uiUpdateCallback = () ->
             {
-                renderer.removeRoad(road);
-            }
+                renderer.removeIntersection(i);
+                for (Road road : affectedRoads)
+                {
+                    renderer.removeRoad(road);
+                }
+            };
         } else if (item instanceof Road)
         {
             Road roadToDelete = (Road) item;
             Optional<Road> oppositeRoadOpt = engine.roadNetwork().findOppositeRoad(roadToDelete);
-            renderer.removeRoad(roadToDelete);
-            oppositeRoadOpt.ifPresent(renderer::removeRoad);
+            uiUpdateCallback = () ->
+            {
+                renderer.removeRoad(roadToDelete);
+                oppositeRoadOpt.ifPresent(renderer::removeRoad);
+            };
         } else if (item instanceof Car)
         {
-            renderer.removeCar((Car) item);
+            Car carToDelete = (Car) item;
+            uiUpdateCallback = () -> renderer.removeCar(carToDelete);
+        } else
+        {
+            uiUpdateCallback = () ->
+            {
+            };
         }
+
+        engine.postEvent(new DeleteItemEvent(item, uiUpdateCallback));
     }
 
     public void clearAll()

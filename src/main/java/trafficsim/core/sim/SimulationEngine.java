@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javafx.application.Platform;
+
 public final class SimulationEngine
 {
     // timing
@@ -142,7 +144,9 @@ public final class SimulationEngine
             }
         } else if (event instanceof DeleteItemEvent)
         {
-            Object item = ((DeleteItemEvent) event).getItemToDelete();
+            DeleteItemEvent cmd = (DeleteItemEvent) event;
+            Object item = cmd.getItemToDelete();
+
             if (item instanceof Intersection)
             {
                 Intersection i = (Intersection) item;
@@ -162,6 +166,8 @@ public final class SimulationEngine
             {
                 updatables.remove(item);
             }
+            Platform.runLater(cmd.getPostDeletionCallback());
+
         } else if (event instanceof AppliableCommand)
         {
             ((AppliableCommand) event).apply();

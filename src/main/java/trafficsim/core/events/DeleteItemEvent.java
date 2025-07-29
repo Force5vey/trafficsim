@@ -18,26 +18,8 @@ public final class DeleteItemEvent implements ModelCommandEvent
         return itemToDelete;
     }
 
-    @Override
-    public boolean equals(Object o)
+    public Runnable getPostDeletionCallback()
     {
-        if (this == o)
-        {
-            return true;
-        }
-
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
-
-        DeleteItemEvent that = (DeleteItemEvent) o;
-        return Objects.equals(itemToDelete, that.itemToDelete);
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(itemToDelete);
+        return postDeletionCallback;
     }
 }
