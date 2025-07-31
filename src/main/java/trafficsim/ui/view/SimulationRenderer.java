@@ -1,4 +1,17 @@
-// src/main/java/trafficsim/ui/view/SimulationRenderer.java
+/***************************************************************
+
+- File:        SimulationRenderer.java
+- Date:        1 August 2025
+- Author:      Edmond Leaveck
+- Purpose:     Handles all JavaFX rendering for the TrafficSim simulation.
+
+- Description:
+- Manages the creation, updating, and removal of all visual elements
+- in the simulation, including intersections, roads, cars, and traffic
+- lights. Synchronizes the UI with the simulation model state and
+- provides interaction hooks for editing and selection.
+
+***************************************************************/
 
 package trafficsim.ui.view;
 
@@ -73,6 +86,12 @@ public class SimulationRenderer
         }.start();
     }
 
+    /**
+    * Called when a new intersection is added to the simulation.
+    * Creates and registers the corresponding IntersectionView and adds it to the UI.
+    *
+    * @param intersection The intersection model object to render.
+    */
     public void onIntersectionAdded(Intersection intersection)
     {
         IntersectionView viewMgr = buildViewManager(intersection);
@@ -81,6 +100,12 @@ public class SimulationRenderer
         intersectionPane.getChildren().addAll(viewMgr.getBaseNodes());
     }
 
+    /**
+    * Retrieves the IntersectionView associated with the given model.
+    *
+    * @param model The intersection model.
+    * @return The corresponding IntersectionView, or null if not present.
+    */
     public IntersectionView getIntersectionView(Intersection model)
     {
         return intersectionViewMgrs.get(model);
@@ -100,6 +125,11 @@ public class SimulationRenderer
         }
     }
 
+    /**
+    * Removes the visual representation of the specified road from the UI.
+    *
+    * @param road The road to remove.
+    */
     public void removeRoad(Road road)
     {
         Line view = roadViews.remove(road);
@@ -122,6 +152,12 @@ public class SimulationRenderer
         return (from.x < to.x) || (from.x == to.x && from.y < to.y);
     }
 
+    /**
+    * Called when a new road is added to the simulation.
+    * Creates and registers the corresponding JavaFX Line and tile graphics.
+    *
+    * @param road The road model object to render.
+    */
     public void onRoadAdded(Road road)
     {
         Line line = buildRoadView(road);
@@ -148,6 +184,12 @@ public class SimulationRenderer
         }
     }
 
+    /**
+    * Called when a new car is added to the simulation.
+    * Creates and registers the corresponding ImageView and data bubble.
+    *
+    * @param car The car model object to render.
+    */
     public void onCarAdded(Car car)
     {
         ImageView view = buildCarView(car);
@@ -161,6 +203,11 @@ public class SimulationRenderer
         bubble.setVisible(areBubblesGloballyVisible && car.getShowDataBubble());
     }
 
+    /**
+    * Removes the visual representation of the specified car from the UI.
+    *
+    * @param car The car to remove.
+    */
     public void removeCar(Car car)
     {
         ImageView view = carViews.remove(car);
@@ -178,6 +225,10 @@ public class SimulationRenderer
         carDataTexts.remove(car);
     }
 
+    /**
+    * Removes all visual elements from the simulation UI.
+    * Clears all internal mappings and JavaFX nodes.
+    */
     public void clearAll()
     {
         carViews.clear();
@@ -193,6 +244,10 @@ public class SimulationRenderer
         lightPane.getChildren().clear();
     }
 
+    /**
+    * Updates all car and intersection views to reflect the current simulation state.
+    * Called on every animation frame.
+    */
     private void refreshFrame()
     {
         for (Map.Entry<Car, CarAdapter> e : carAdapters.entrySet())
@@ -246,6 +301,12 @@ public class SimulationRenderer
         }
     }
 
+    /**
+    * Creates a data bubble UI element for the specified car, displaying its position and speed.
+    *
+    * @param car The car model object.
+    * @return A JavaFX Group representing the data bubble.
+    */
     private Group buildCarDataBubble(Car car)
     {
         Rectangle bubbleBg = new Rectangle(120, 50);
@@ -272,6 +333,11 @@ public class SimulationRenderer
         return new Group(bubbleBg, pointer, dataText);
     }
 
+    /**
+    * Sets the global visibility of all car data bubbles.
+    *
+    * @param visible True to show all bubbles, false to hide.
+    */
     public void setAllBubblesVisible(boolean visible)
     {
         this.areBubblesGloballyVisible = visible;
@@ -283,6 +349,12 @@ public class SimulationRenderer
         }
     }
 
+    /**
+    * Creates and returns the ImageView for a car, including mouse event handlers.
+    *
+    * @param car The car model object.
+    * @return The ImageView representing the car.
+    */
     private ImageView buildCarView(Car car)
     {
         Image img = CarAssetManager.getNextCarImage();
@@ -321,6 +393,13 @@ public class SimulationRenderer
         return view;
     }
 
+    /**
+    * Constructs the appropriate IntersectionView for the given intersection type.
+    *
+    * @param intersection The intersection model.
+    * @return The IntersectionView for the intersection.
+    * @throws IllegalArgumentException if the intersection type is unknown.
+    */
     private IntersectionView buildViewManager(Intersection intersection)
     {
         Consumer<Intersection> editCallback = controller::selectForEditing;
@@ -336,6 +415,12 @@ public class SimulationRenderer
         }
     }
 
+    /**
+    * Creates a JavaFX Line representing the road, with proper lane offset and endpoints.
+    *
+    * @param road The road model.
+    * @return The Line node for the road.
+    */
     private Line buildRoadView(Road road)
     {
         double fromX = IntersectionUtil.toPx(road.from().position().x);
@@ -373,6 +458,12 @@ public class SimulationRenderer
         return line;
     }
 
+    /**
+    * Creates a group of tiled road images along the given road segment.
+    *
+    * @param road The road model.
+    * @return A Group containing the tiled road images.
+    */
     private Group buildRoadTiles(Road road)
     {
         Group tileGroup = new Group();
@@ -461,6 +552,11 @@ public class SimulationRenderer
         return tileGroup;
     }
 
+    /**
+    * Returns an unmodifiable collection of all intersection model objects currently rendered.
+    *
+    * @return Collection of Intersection objects.
+    */
     public Collection<Intersection> getIntersections()
     {
         return Collections.unmodifiableSet(intersectionViewMgrs.keySet());

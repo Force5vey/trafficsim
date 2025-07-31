@@ -1,3 +1,16 @@
+/***************************************************************
+
+- File:        BackgroundHelper.java
+- Date:        1 August 2025
+- Author:      Edmond Leaveck
+- Purpose:     Utility for setting up the simulation background in the UI.
+
+- Description:
+- Loads and applies a tiled grass image as the background for the simulation
+- area. Ensures the background is visually consistent and non-interactive.
+
+***************************************************************/
+
 package trafficsim.ui.controller.helpers;
 
 import java.util.Objects;
@@ -15,6 +28,12 @@ public final class BackgroundHelper
     {
     }
 
+    /**
+    * Sets up the background of the given pane with a repeating grass tile image.
+    * Makes the background pane mouse transparent.
+    *
+    * @param backgroundPane The JavaFX Pane to set the background for.
+    */
     public static void setupBackground(Pane backgroundPane)
     {
         Image grassImage = new Image(Objects.requireNonNull(

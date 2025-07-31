@@ -1,3 +1,17 @@
+/***************************************************************
+
+- File:        IntersectionView.java
+- Date:        1 August 2025
+- Author:      Edmond Leaveck
+- Purpose:     Abstract base class for intersection UI rendering.
+
+- Description:
+- Defines the interface and shared logic for JavaFX visual
+- representations of intersections, including mouse interaction
+- handling and update hooks for subclasses.
+
+***************************************************************/
+
 package trafficsim.ui.view.intersection;
 
 import java.util.ArrayList;
@@ -20,17 +34,38 @@ public abstract class IntersectionView
 
     private static final DropShadow GLOW_EFFECT = new DropShadow(BlurType.GAUSSIAN, Color.ORANGE, 12, 0.7, 0, 0);
 
+    /**
+    * Constructs an IntersectionView for the given intersection model.
+    *
+    * @param model        The intersection model to visualize.
+    * @param editAction   Callback to invoke when the intersection is selected for editing.
+    * @param controller   Reference to the main controller for interaction context.
+    */
     public IntersectionView(Intersection model, Consumer<Intersection> editAction, MainController controller)
     {
         this.model = model;
 
     }
 
+    /**
+    * Returns the list of JavaFX nodes that make up the base visual representation
+    * of this intersection.
+    *
+    * @return List of JavaFX Node objects.
+    */
     public List<Node> getBaseNodes()
     {
         return baseNodes;
     }
 
+    /**
+    * Attaches mouse event handlers to the given node for interaction modes
+    * such as editing, road placement, and car placement.
+    *
+    * @param node        The JavaFX node to attach handlers to.
+    * @param editAction  Callback for edit selection.
+    * @param controller  Reference to the main controller for interaction context.
+    */
     protected void attachMouseHandlers(Node node, Consumer<Intersection> editAction, MainController controller)
     {
         node.setOnMouseEntered(event ->
@@ -73,11 +108,20 @@ public abstract class IntersectionView
         });
     }
 
+    /**
+    * Returns the intersection model associated with this view.
+    *
+    * @return The Intersection model object.
+    */
     public Intersection getModel()
     {
         return model;
     }
 
+    /**
+    * Updates the visual representation of the intersection.
+    * Subclasses must implement this to reflect model state changes.
+    */
     public abstract void updateView();
 
 }

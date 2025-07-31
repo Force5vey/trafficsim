@@ -1,3 +1,17 @@
+/***************************************************************
+
+- File:        SimulationActionHandler.java
+- Date:        1 August 2025
+- Author:      Edmond Leaveck
+- Purpose:     Handles user-initiated actions and posts events to the simulation engine.
+
+- Description:
+- Provides methods for adding and removing intersections, roads, and cars,
+- as well as clearing the simulation. Coordinates UI updates with the
+- simulation model by posting events and invoking renderer callbacks.
+
+***************************************************************/
+
 package trafficsim.ui.controller.helpers;
 
 import java.util.List;
@@ -19,12 +33,25 @@ public class SimulationActionHandler
         this.renderer = renderer;
     }
 
+    /**
+    * Adds a new intersection to the simulation and updates the UI.
+    *
+    * @param intersection The intersection to add.
+    */
     public void addIntersection(Intersection intersection)
     {
         engine.postEvent(new AddIntersectionEvent((intersection)));
         renderer.onIntersectionAdded(intersection);
     }
 
+    /**
+    * Adds a bidirectional road between two intersections with the specified speed.
+    * Posts events for both directions and updates the UI.
+    *
+    * @param from      The starting intersection.
+    * @param to        The ending intersection.
+    * @param speedMps  The speed limit for the road in meters per second.
+    */
     public void addRoad(Intersection from, Intersection to, double speedMps)
     {
         double length = from.position().distanceTo(to.position());
@@ -37,12 +64,24 @@ public class SimulationActionHandler
         renderer.onRoadAdded(road2);
     }
 
+    /**
+    * Adds a car to the simulation at the specified intersection and updates the UI.
+    *
+    * @param car         The car to add.
+    * @param spawnPoint  The intersection where the car will be spawned.
+    */
     public void addCar(Car car, Intersection spawnPoint)
     {
         engine.postEvent(new AddCarEvent(car, spawnPoint));
         renderer.onCarAdded(car);
     }
 
+    /**
+    * Deletes the specified item (intersection, road, or car) from the simulation.
+    * Posts a deletion event and updates the UI accordingly.
+    *
+    * @param item The model object to delete.
+    */
     public void deleteItem(Object item)
     {
         final Runnable uiUpdateCallback;
@@ -82,6 +121,9 @@ public class SimulationActionHandler
         engine.postEvent(new DeleteItemEvent(item, uiUpdateCallback));
     }
 
+    /**
+    * Clears all items from the simulation and UI.
+    */
     public void clearAll()
     {
         engine.postEvent(ClearAllEvent.INSTANCE);

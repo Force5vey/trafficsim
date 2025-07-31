@@ -1,3 +1,17 @@
+/***************************************************************
+
+- File:        IntersectionUtil.java
+- Date:        1 August 2025
+- Author:      Edmond Leaveck
+- Purpose:     Utility functions for intersection and road geometry in the UI.
+
+- Description:
+- Provides methods for converting between world and pixel units,
+- and for calculating lane offset vectors for road rendering.
+- Used to ensure consistent visual placement of roads and intersections.
+
+***************************************************************/
+
 package trafficsim.ui.adapter;
 
 import trafficsim.core.model.Intersection;
@@ -6,9 +20,22 @@ import trafficsim.core.model.Vec2;
 
 public final class IntersectionUtil
 {
+    /**
+    * Conversion factor: number of pixels per meter in the UI.
+    */
     public static final double PX_PER_M = 10;
+
+    /**
+    * Lane offset in pixels for rendering parallel lanes.
+    */
     public static final double LANE_OFFSET_PX = 14.0;
 
+    /**
+    * Converts a distance in meters to pixels using the UI scale.
+    *
+    * @param meters Distance in meters.
+    * @return       Distance in pixels.
+    */
     public static double toPx(double meters)
     {
         return meters * PX_PER_M;
@@ -19,6 +46,14 @@ public final class IntersectionUtil
     {
     }
 
+    /**
+    * Calculates the lane offset vector for a given road, used to visually
+    * separate parallel roads in the UI. The offset is perpendicular to the
+    * road direction and depends on the canonical direction of the road.
+    *
+    * @param road The road for which to calculate the offset.
+    * @return     A Vec2 representing the offset in pixels.
+    */
     public static Vec2 getLaneOffsetVector(Road road)
     {
         Intersection i1 = road.from();

@@ -1,3 +1,17 @@
+/***************************************************************
+
+- File:        Car.java
+- Date:        1 August 2025
+- Author:      Edmond Leaveck
+- Purpose:     Represents a car in the traffic simulation.
+
+- Description:
+- Simulates car dynamics, including speed, acceleration, lane following,
+- and interaction with traffic lights and other cars. Handles movement,
+- collision avoidance, and state updates for each simulation tick.
+
+***************************************************************/
+
 package trafficsim.core.model;
 
 import java.util.List;
@@ -31,6 +45,13 @@ public class Car implements Updatable
     private double targetV;
     private List<Updatable> allSimObjects;
 
+    /**
+    * Constructs a Car with the specified road network, maximum speed, and acceleration.
+    *
+    * @param net         The RoadNetwork the car operates in.
+    * @param maxSpeed    The maximum speed of the car (m/s).
+    * @param acceleration The acceleration of the car (m/s^2).
+    */
     public Car(RoadNetwork net, double maxSpeed, double acceleration)
     {
         this.net = net;
@@ -40,12 +61,22 @@ public class Car implements Updatable
         this.targetV = 0.0;
     }
 
-    // constructor for some defaults
+    /**
+     * Constructs a Car with default maximum speed and acceleration.
+     *
+     * @param net The RoadNetwork the car operates in.
+     */
     public Car(RoadNetwork net)
     {
         this(net, 35.0, 2.0);
     }
 
+    /**
+    * Returns the current velocity of the car in meters per second.
+    * Thread-safe.
+    *
+    * @return The car's velocity.
+    */
     public double getVelocity()
     {
         synchronized (stateLock)
@@ -54,6 +85,13 @@ public class Car implements Updatable
         }
     }
 
+    /**
+    * Attaches the car to a road at a specified offset (in meters).
+    * Also records the initial state for reset purposes.
+    *
+    * @param road         The Road to attach to.
+    * @param offsetMeters The offset along the road in meters.
+    */
     public void attachTo(Road road, double offsetMeters)
     {
         this.road = road;
@@ -63,6 +101,9 @@ public class Car implements Updatable
         this.initialS = this.s;
     }
 
+    /**
+    * Resets the car to its initial road and position, and stops its motion.
+    */
     public void resetToInitialState()
     {
         this.road = this.initialRoad;
@@ -102,6 +143,13 @@ public class Car implements Updatable
         return remainingDistanceToStopLine <= requiredStoppingDistance;
     }
 
+    /**
+    * Updates the car's state for the given time step.
+    * Handles speed adjustment, movement, traffic light compliance,
+    * and lane following logic.
+    *
+    * @param deltaTime The time step in seconds.
+    */
     @Override
     public void update(double deltaTime)
     {
@@ -165,6 +213,11 @@ public class Car implements Updatable
 
     }
 
+    /**
+    * Sets the list of all simulation objects for leader-finding and collision avoidance.
+    *
+    * @param objects List of Updatable simulation objects.
+    */
     public void setSimulationObjects(List<Updatable> objects)
     {
         this.allSimObjects = objects;
@@ -203,6 +256,11 @@ public class Car implements Updatable
         return Optional.ofNullable(leader);
     }
 
+    /**
+    * Determines the car's target speed based on speed limits, traffic lights,
+    * and the position of the leading car (if any). Calculates a safe speed
+    * to avoid collisions and to stop at red lights if necessary.
+    */
     private void decideTargetSpeed()
     {
         double effectiveSpeedLimit = Math.min(maxSpeed, road.speedLimit());
@@ -240,6 +298,13 @@ public class Car implements Updatable
         }
     }
 
+    /**
+    * Selects the next road for the car to enter when it reaches the end of its current road.
+    * Avoids U-turns at signalised intersections. Returns an Optional containing the next road,
+    * or empty if no valid continuation exists.
+    *
+    * @return Optional containing the next Road, or empty if at a dead end.
+    */
     private Optional<Road> findNextRoad()
     {
         Intersection node = road.to();
@@ -269,6 +334,12 @@ public class Car implements Updatable
 
     }
 
+    /**
+    * Returns the car's position in world coordinates, including lane offset.
+    * Thread-safe.
+    *
+    * @return The car's position as a Vec2.
+    */
     public Vec2 worldPos()
     {
         Road localRoad;
@@ -305,6 +376,11 @@ public class Car implements Updatable
         return new Vec2(centerX + offsetX_meters, centerY + offsetY_meters);
     }
 
+    /**
+    * Returns the heading of the car in radians, based on its current road.
+    *
+    * @return The heading angle in radians.
+    */
     public double headingRad()
     {
         if (road == null)

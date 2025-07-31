@@ -1,3 +1,17 @@
+/***************************************************************
+
+- File:        PropertiesPanelManager.java
+- Date:        1 August 2025
+- Author:      Edmond Leaveck
+- Purpose:     Manages the properties panel UI for editing and creating simulation objects.
+
+- Description:
+- Handles the display, validation, and editing of properties for intersections,
+- roads, and cars. Provides methods to create and validate model objects from
+- user input and to generate update events for the simulation engine.
+
+***************************************************************/
+
 package trafficsim.ui.controller.helpers;
 
 import java.util.Optional;
@@ -44,6 +58,13 @@ public class PropertiesPanelManager
         this.propertiesPlaceholderLabel.setWrapText(true);
     }
 
+    /**
+    * Sets up the properties panel UI for the given interaction mode and selected item.
+    * Populates the panel with appropriate controls and validation messages.
+    *
+    * @param mode         The current interaction mode.
+    * @param selectedItem The item currently selected for editing, or null.
+    */
     public void setupForMode(Mode mode, Object selectedItem)
     {
         propertiesPane.setVisible(true);
@@ -88,6 +109,10 @@ public class PropertiesPanelManager
         }
     }
 
+    /**
+    * Resets the properties panel to its default state.
+    * Clears all controls and validation messages.
+    */
     public void reset()
     {
         propertiesGrid.getChildren().clear();
@@ -97,12 +122,26 @@ public class PropertiesPanelManager
         editButtonsBox.setManaged(false);
     }
 
+    /**
+    * Sets a validation message in the properties panel.
+    *
+    * @param message The message to display.
+    * @param isError True if the message is an error, false for normal info.
+    */
     public void setValidationMessage(String message, boolean isError)
     {
         validationLabel.setText(message);
         validationLabel.setStyle(isError ? "-fx-text-fill: #ff3333;" : "-fx-text-fill: -fx-text-base-color;");
     }
 
+    /**
+    * Creates an Intersection object from the current UI input fields.
+    * Validates input and returns an Optional containing the intersection if valid.
+    *
+    * @param x The x-coordinate for the intersection.
+    * @param y The y-coordinate for the intersection.
+    * @return  Optional containing the new Intersection, or empty if invalid.
+    */
     public Optional<Intersection> createIntersectionFromUI(double x, double y)
     {
         validationLabel.setText("");
@@ -138,6 +177,11 @@ public class PropertiesPanelManager
         return Optional.empty();
     }
 
+    /**
+    * Validates the road speed input field and returns the value in meters per second.
+    *
+    * @return Optional containing the speed in m/s, or empty if invalid.
+    */
     public Optional<Double> validateRoadSpeed()
     {
         validationLabel.setText("");
@@ -157,6 +201,13 @@ public class PropertiesPanelManager
         }
     }
 
+    /**
+    * Creates a Car object from the current UI input fields.
+    * Validates input and returns an Optional containing the car if valid.
+    *
+    * @param net The RoadNetwork to associate with the car.
+    * @return    Optional containing the new Car, or empty if invalid.
+    */
     public Optional<Car> createCarFromUI(RoadNetwork net)
     {
         validationLabel.setText("");
@@ -179,6 +230,11 @@ public class PropertiesPanelManager
         }
     }
 
+    /**
+    * Populates the properties panel with controls and values for editing the given item.
+    *
+    * @param item The model object to edit (Intersection, Road, or Car).
+    */
     public void populatePropertiesForEdit(Object item)
     {
         propertiesGrid.getChildren().clear();
@@ -360,6 +416,10 @@ public class PropertiesPanelManager
         return Optional.empty();
     }
 
+    /**
+    * Creates and initializes all property controls used in the properties panel.
+    * Called once during construction.
+    */
     private void createPropertyControls()
     {
         intersectionTypeCombo = new ComboBox<>();
@@ -381,6 +441,11 @@ public class PropertiesPanelManager
         carShowBubbleCheck = new CheckBox("Show Data Bubble");
     }
 
+    /**
+    * Updates the intersection property fields based on the selected intersection type.
+    *
+    * @param type The selected intersection type ("Traffic Light" or "Roundabout").
+    */
     private void updateIntersectionFields(String type)
     {
         if ("Traffic Light".equals(type))

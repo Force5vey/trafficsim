@@ -1,3 +1,18 @@
+/***************************************************************
+
+- File:        SimulationEngine.java
+- Date:        1 August 2025
+- Author:      Edmond Leaveck
+- Purpose:     Core simulation engine for TrafficSim.
+
+- Description:
+- Manages the simulation loop, event queue, and all simulation state.
+- Handles time progression, model updates, and thread-safe event processing.
+- Provides methods for posting events, controlling simulation state, and
+- accessing the road network and simulation time.
+
+***************************************************************/
+
 package trafficsim.core.sim;
 
 import trafficsim.core.model.*;
@@ -24,6 +39,10 @@ public final class SimulationEngine
     private final List<Updatable> updatables = new CopyOnWriteArrayList<>();
     private final RoadNetwork roadNet = new RoadNetwork();
 
+    /**
+    * Constructs a SimulationEngine and starts the simulation loop.
+    * Initializes the event queue, updatables list, and road network.
+    */
     public SimulationEngine()
     {
         this.exec = Executors.newSingleThreadScheduledExecutor();
@@ -31,23 +50,36 @@ public final class SimulationEngine
     }
 
     /**
-     *   method for threads to post to engines queue
-    **/
+     * Posts a simulation event to the engine's event queue for processing.
+     * Thread-safe; can be called from any thread.
+     *
+     * @param event The SimulationEvent to post.
+     */
     public void postEvent(SimulationEvent event)
     {
         eventQueue.add(event);
     }
 
+    /**
+    * Starts the simulation, allowing updates to proceed.
+    */
     private void start()
     {
         isRunning = true;
     }
 
+    /**
+    * Pauses the simulation, halting updates.
+    */
     private void pause()
     {
         isRunning = false;
     }
 
+    /**
+    * Stops the simulation and resets all cars to their initial state.
+    * Pauses the simulation and resets the simulation time.
+    */
     private void stop()
     {
         pause();
@@ -62,6 +94,10 @@ public final class SimulationEngine
         }
     }
 
+    /**
+    * Clears all simulation state, removing all updatables and roads.
+    * Pauses the simulation and resets the simulation time.
+    */
     private void clearAll()
     {
         pause();
@@ -70,12 +106,23 @@ public final class SimulationEngine
         simTimeMillis.set(0);
     }
 
+    /**
+    * Adds a vehicle to the simulation at the specified road and offset.
+    *
+    * @param car              The Car to add.
+    * @param spawnRoad        The Road to attach the car to.
+    * @param spawnOffsetMeters The offset along the road in meters.
+    */
     private void addVehicle(Car car, Road spawnRoad, double spawnOffsetMeters)
     {
         car.attachTo(spawnRoad, spawnOffsetMeters);
         updatables.add(car);
     }
 
+    /**
+    * Advances the simulation by one tick, updating all updatable objects.
+    * Called periodically by the simulation loop.
+    */
     private void step()
     {
         processEventQueue();
@@ -92,6 +139,10 @@ public final class SimulationEngine
         }
     }
 
+    /**
+    * Processes all events in the event queue, dispatching them to the appropriate handlers.
+    * Handles engine control, model commands, and other simulation events.
+    */
     private void processEventQueue()
     {
         SimulationEvent event;
@@ -107,6 +158,11 @@ public final class SimulationEngine
         }
     }
 
+    /**
+    * Handles engine control events (start, pause, stop).
+    *
+    * @param event The EngineControlEvent to process.
+    */
     private void handleEngineControl(EngineControlEvent event)
     {
         switch (event.getType()) {
@@ -122,6 +178,11 @@ public final class SimulationEngine
         }
     }
 
+    /**
+    * Handles model command events, such as adding or removing items from the simulation.
+    *
+    * @param event The ModelCommandEvent to process.
+    */
     private void handleModelCommand(ModelCommandEvent event)
     {
         if (event instanceof AddIntersectionEvent)
@@ -182,6 +243,10 @@ public final class SimulationEngine
         }
     }
 
+    /**
+    * Shuts down the simulation engine and stops the simulation loop.
+    * Waits for the executor to terminate and interrupts if necessary.
+    */
     public void shutdown()
     {
         if (exec != null && !exec.isShutdown())
@@ -201,6 +266,11 @@ public final class SimulationEngine
         }
     }
 
+    /**
+    * Returns the simulation's road network.
+    *
+    * @return The RoadNetwork object managed by the engine.
+    */
     public RoadNetwork roadNetwork()
     {
         return roadNet;

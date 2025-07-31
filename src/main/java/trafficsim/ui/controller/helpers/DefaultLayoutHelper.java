@@ -1,3 +1,17 @@
+/***************************************************************
+
+- File:        DefaultLayoutHelper.java
+- Date:        1 August 2025
+- Author:      Edmond Leaveck
+- Purpose:     Provides a default road network and car layout for the simulation.
+
+- Description:
+- Sets up a basic grid of intersections, roads, and cars to initialize
+- the simulation with a working example. Intended for demonstration and
+- testing purposes.
+
+***************************************************************/
+
 package trafficsim.ui.controller.helpers;
 
 import java.util.ArrayList;
@@ -16,6 +30,14 @@ public final class DefaultLayoutHelper
         // guard cstr
     }
 
+    /**
+    * Sets up a default layout of intersections, roads, and cars in the simulation.
+    * Adds a square of signalised intersections, connects them with roads, and
+    * spawns a car at each intersection.
+    *
+    * @param actionHandler The SimulationActionHandler to use for adding items.
+    * @param roadNetwork   The RoadNetwork to associate with new cars.
+    */
     public static void setupDefaultLayout(SimulationActionHandler actionHandler, RoadNetwork roadNetwork)
     {
         List<Intersection> intersections = new ArrayList<>();

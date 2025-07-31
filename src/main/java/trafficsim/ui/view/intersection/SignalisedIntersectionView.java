@@ -1,3 +1,18 @@
+/***************************************************************
+
+- File:        SignalisedIntersectionView.java
+- Date:        1 August 2025
+- Author:      Edmond Leaveck
+- Purpose:     Renders and manages the UI for signalised intersections.
+
+- Description:
+- Provides the JavaFX visual representation for intersections with
+- traffic lights, including the intersection image and per-road
+- signal indicators. Handles updates to signal states and user
+- interaction for editing and selection.
+
+***************************************************************/
+
 package trafficsim.ui.view.intersection;
 
 import java.util.function.Consumer;
@@ -28,6 +43,14 @@ public class SignalisedIntersectionView extends IntersectionView
     private final Map<Road, Circle> signalViews = new HashMap<>();
     private final SignalisedIntersection sigModel;
 
+    /**
+    * Constructs a SignalisedIntersectionView for the given intersection model.
+    * Initializes the intersection image and prepares the view for signal light rendering.
+    *
+    * @param model        The intersection model to visualize (must be SignalisedIntersection).
+    * @param editAction   Callback to invoke when the intersection is selected for editing.
+    * @param controller   Reference to the main controller for interaction context.
+    */
     public SignalisedIntersectionView(Intersection model, Consumer<Intersection> editAction, MainController controller)
     {
         super(model, editAction, controller);
@@ -53,6 +76,15 @@ public class SignalisedIntersectionView extends IntersectionView
         baseNodes.forEach(node -> attachMouseHandlers(node, editAction, controller));
     }
 
+    /**
+    * Creates a signal light UI element for a specific incoming road at this intersection.
+    * Positions the signal indicator based on the road's direction.
+    *
+    * @param road         The incoming road for which to create the signal.
+    * @param editAction   Callback for edit selection.
+    * @param controller   Reference to the main controller for interaction context.
+    * @return             The JavaFX Node representing the signal light.
+    */
     public Node createSignalForRoad(Road road, Consumer<Intersection> editAction, MainController controller)
     {
         Vec2 roadOriginPos = road.from().position();
@@ -78,6 +110,12 @@ public class SignalisedIntersectionView extends IntersectionView
         return signalCircle;
     }
 
+    /**
+    * Removes the signal light UI element for a specific road from the given parent pane.
+    *
+    * @param road        The road whose signal should be removed.
+    * @param parentPane  The JavaFX Pane containing the signal node.
+    */
     public void removeSignalForRoad(Road road, Pane parentPane)
     {
         Circle signalCircle = signalViews.remove(road);
@@ -87,6 +125,10 @@ public class SignalisedIntersectionView extends IntersectionView
         }
     }
 
+    /**
+    * Updates the visual state of all signal lights to match the current model state.
+    * Should be called on each frame or when the signal state changes.
+    */
     @Override
     public void updateView()
     {
@@ -123,6 +165,11 @@ public class SignalisedIntersectionView extends IntersectionView
         }
     }
 
+    /**
+    * Removes all signal light UI elements from the given parent pane and clears internal mappings.
+    *
+    * @param parentPane The JavaFX Pane containing the signal nodes.
+    */
     public void removeAllSignalViews(Pane parentPane)
     {
         for (Circle signalCircle : signalViews.values())

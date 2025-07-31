@@ -1,4 +1,16 @@
-// src/main/java/trafficsim/ui/controller/MainController.java
+/***************************************************************
+
+- File:        MainController.java
+- Date:        1 August 2025
+- Author:      Edmond Leaveck
+- Purpose:     JavaFX controller for the main TrafficSim application window.
+
+- Description:
+- Handles user interactions, UI state management, and communication
+- between the simulation engine and the user interface. Manages
+- simulation controls, editing modes, and property panels.
+
+***************************************************************/
 
 package trafficsim.ui.controller;
 
@@ -90,6 +102,10 @@ public class MainController
     private Object selectedForEdit = null;
     private boolean isSimStopped = true;
 
+    /**
+    * Initializes the controller after the FXML fields are injected.
+    * Sets up the simulation engine, renderer, UI event handlers, and default layout.
+    */
     @FXML
     public void initialize()
     {
@@ -132,11 +148,21 @@ public class MainController
         });
     }
 
+    /**
+    * Returns the current interaction mode of the UI.
+    *
+    * @return The current InteractionModeManager.Mode.
+    */
     public Mode getCurrentMode()
     {
         return modeManager != null ? modeManager.getCurrentMode() : Mode.NORMAL;
     }
 
+    /**
+    * Sets the current interaction mode and updates UI controls accordingly.
+    *
+    * @param newMode The new interaction mode to set.
+    */
     private void setMode(Mode newMode)
     {
         if (modeManager == null)
@@ -157,6 +183,9 @@ public class MainController
         addCarButton.setDisable(isAdding && newMode != Mode.PLACING_CAR);
     }
 
+    /**
+    * Resets the UI to normal mode and updates the stop button state if needed.
+    */
     private void resetToNormalMode()
     {
         selectedForEdit = null;
@@ -167,24 +196,39 @@ public class MainController
         }
     }
 
+    /**
+    * Handles the request to enter or exit intersection placement mode.
+    * Toggles the mode and updates UI controls.
+    */
     @FXML
     private void handleAddIntersectionRequest()
     {
         setMode(modeManager.getCurrentMode() == Mode.PLACING_INTERSECTION ? Mode.NORMAL : Mode.PLACING_INTERSECTION);
     }
 
+    /**
+    * Handles the request to enter or exit road placement mode.
+    * Toggles the mode and updates UI controls.
+    */
     @FXML
     private void handleAddRoadRequest()
     {
         setMode(getCurrentMode() == Mode.PLACING_ROAD ? Mode.NORMAL : Mode.PLACING_ROAD);
     }
 
+    /**
+    * Handles the request to enter or exit car placement mode.
+    * Toggles the mode and updates UI controls.
+    */
     @FXML
     private void handleAddCarRequest()
     {
         setMode(getCurrentMode() == Mode.PLACING_CAR ? Mode.NORMAL : Mode.PLACING_CAR);
     }
 
+    /**
+    * Handles toggling the visibility of all car data bubbles in the simulation.
+    */
     @FXML
     private void handleToggleBubbles()
     {
@@ -193,6 +237,12 @@ public class MainController
         toggleBubblesButton.setText(show ? "Hide Bubbles" : "Show Bubbles");
     }
 
+    /**
+    * Handles mouse clicks on the simulation pane for intersection placement.
+    * Places a new intersection if in the correct mode and location is valid.
+    *
+    * @param event The MouseEvent representing the click.
+    */
     private void handlePaneClick(MouseEvent event)
     {
         if (event.getTarget() != simulationStackPane || getCurrentMode() != Mode.PLACING_INTERSECTION)
@@ -217,6 +267,12 @@ public class MainController
         });
     }
 
+    /**
+    * Handles the selection of an intersection as the endpoint for a new road.
+    * Manages the two-step road creation process.
+    *
+    * @param picked The intersection selected by the user.
+    */
     public void onIntersectionPickedForRoad(Intersection picked)
     {
         if (getCurrentMode() != Mode.PLACING_ROAD)
@@ -244,6 +300,11 @@ public class MainController
         }
     }
 
+    /**
+    * Handles the selection of an intersection as the spawn point for a new car.
+    *
+    * @param picked The intersection selected by the user.
+    */
     public void onIntersectionPickedForCar(Intersection picked)
     {
         if (getCurrentMode() != Mode.PLACING_CAR)
@@ -264,6 +325,11 @@ public class MainController
         });
     }
 
+    /**
+    * Selects an item (intersection, road, or car) for editing if in normal mode.
+    *
+    * @param item The model object to edit.
+    */
     public void selectForEditing(Object item)
     {
         if (getCurrentMode() != Mode.NORMAL)
@@ -274,6 +340,10 @@ public class MainController
         setMode(Mode.EDITING);
     }
 
+    /**
+    * Applies edits made in the properties panel to the selected item.
+    * Posts the update event to the simulation engine.
+    */
     @FXML
     private void handleApplyEdit()
     {
@@ -286,12 +356,19 @@ public class MainController
         });
     }
 
+    /**
+    * Cancels the current edit operation and resets the UI to normal mode.
+    */
     @FXML
     private void handleCancelEdit()
     {
         resetToNormalMode();
     }
 
+    /**
+    * Handles deletion of the currently selected item after user confirmation.
+    * Posts the deletion event to the simulation engine.
+    */
     @FXML
     private void handleDelete()
     {
@@ -308,6 +385,13 @@ public class MainController
         }
     }
 
+    /**
+    * Checks if a new intersection placement is far enough from existing intersections.
+    *
+    * @param newPxX The x-coordinate in pixels.
+    * @param newPxY The y-coordinate in pixels.
+    * @return True if the placement is valid, false otherwise.
+    */
     private boolean isFarEnough(double newPxX, double newPxY)
     {
         for (Intersection i : simulationRenderer.getIntersections())
@@ -322,6 +406,9 @@ public class MainController
         return true;
     }
 
+    /**
+    * Updates the stop button's label based on the simulation state.
+    */
     private void updateStopButtonState()
     {
         if (isSimStopped)
@@ -333,6 +420,9 @@ public class MainController
         }
     }
 
+    /**
+    * Handles the start button action. Starts the simulation.
+    */
     @FXML
     private void handleStart()
     {
@@ -341,12 +431,18 @@ public class MainController
         updateStopButtonState();
     }
 
+    /**
+    * Handles the pause button action. Pauses the simulation.
+    */
     @FXML
     private void handlePause()
     {
         engine.postEvent(new EngineControlEvent(ControlType.PAUSE));
     }
 
+    /**
+    * Handles the stop/clear button action. Stops or clears the simulation depending on state.
+    */
     @FXML
     private void handleStop()
     {
@@ -361,6 +457,10 @@ public class MainController
         }
     }
 
+    /**
+    * Shuts down the simulation engine and releases resources.
+    * Called when the application is closing.
+    */
     public void shutdownEngine()
     {
         if (engine != null)

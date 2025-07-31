@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+/***************************************************************
 
+- File:        MainView.fxml
+- Date:        1 August 2025
+- Author:      Edmond Leaveck
+- Purpose:     Defines the main user interface layout for the TrafficSim JavaFX application.
+
+- Description:
+- Specifies the structure and arrangement of UI components, including
+- control buttons, property panels, and the simulation display area.
+- This FXML file is loaded by the JavaFX application to construct the
+- primary window and bind UI elements to the MainController.
+
+***************************************************************/
+-->
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>

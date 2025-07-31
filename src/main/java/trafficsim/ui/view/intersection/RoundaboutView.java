@@ -1,3 +1,17 @@
+/***************************************************************
+
+- File:        RoundaboutView.java
+- Date:        1 August 2025
+- Author:      Edmond Leaveck
+- Purpose:     Renders and manages the UI for roundabout intersections.
+
+- Description:
+- Provides the JavaFX visual representation for roundabout intersections,
+- including the roundabout image and user interaction handlers for editing
+- and selection.
+
+***************************************************************/
+
 package trafficsim.ui.view.intersection;
 
 import java.util.Objects;
@@ -10,6 +24,14 @@ import trafficsim.ui.controller.MainController;
 
 public class RoundaboutView extends IntersectionView
 {
+    /**
+    * Constructs a RoundaboutView for the given intersection model.
+    * Initializes the roundabout image and sets up interaction handlers.
+    *
+    * @param model        The intersection model to visualize (should be a Roundabout).
+    * @param editAction   Callback to invoke when the intersection is selected for editing.
+    * @param controller   Reference to the main controller for interaction context.
+    */
     public RoundaboutView(Intersection model, Consumer<Intersection> editAction, MainController controller)
     {
         super(model, editAction, controller);
@@ -33,6 +55,10 @@ public class RoundaboutView extends IntersectionView
         attachMouseHandlers(roundaboutView, editAction, controller);
     }
 
+    /**
+    * Updates the roundabout view.
+    * (No dynamic state to update; method present for interface compatibility.)
+    */
     @Override
     public void updateView()
     {
